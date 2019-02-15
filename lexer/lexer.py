@@ -12,25 +12,39 @@ class Lexer:
         char_array = []
         lex_array = []
         temp = ""
+        separator = ['(', ')', '{', '}', ';']
+
+        # Checks to see if any lexemes are forming
         forming = False
+        word = False
+        comment = False
 
         # copies all characters into the char_array array
         for line in self.file:
             for char in line:
-                char_array.append(char)
+                    char_array.append(char)
 
         # creates an array of lexemes
-        for i in range(0, len(char_array)):
+        for i in range(len(char_array)):
 
             # checks if comments
-            if char_array[i] == "/" and (char_array[i + 1] == "/" or char_array[i - 1] == "/"):
+            if char_array[i] == "/" and char_array[i + 1] == "/" or comment == True:
+                comment = True
+                if char_array[i] == "\n":
+                    comment = False
                 continue
 
             # handles strings
-            if char_array[i] == '"':
-                word, offset = self.__string_checker(char_array, i)
-                lex_array.append(word)
-                print(1/NULL)
+            if word == True and char_array[i] != '"':
+                temp += char_array[i]
+                continue
+            elif char_array[i] == '"':
+                # checks if final or initial " in string
+                if word == True:
+                    lex_array.append(temp)
+
+                word = not word
+                temp = ""
                 continue
 
             # checks if lexeme is in the making, if so, saves it to array
@@ -39,23 +53,32 @@ class Lexer:
                 lex_array.append(temp)
                 temp = ""
             elif char_array[i] in string.whitespace and forming == False:
+                # ignores collective white spaces
+                continue
+            elif char_array[i] == "\n":
+                # makes sure not to sav next line chars
+                continue
+            elif char_array[i] in separator:
+                # finds that next char is separator so adds old string to list and adds separator
+                if forming == True:
+                    forming = False
+                    lex_array.append(temp)
+                    temp = ""
+
+                lex_array.append(char_array[i])
                 continue
             elif char_array[i]:
                 forming = True
                 temp += char_array[i]
 
+        for i in lex_array:
+            print(i)
+
         return lex_array
 
-    # turns the string into a single entry
-    @staticmethod
-    def __string_checker(array, index):
-        temp = ""
-
-        for i in range(index + 1, len(array)):
-            if array[i] == '"':
-                return temp, len(temp)
-            else:
-                temp += array[i]
+    def __lex_to_tokens(self):
+        # TODO make this
+        print("")
 
     def get_next_token(self):
         print("TODO ", end="")
