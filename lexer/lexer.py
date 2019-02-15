@@ -5,10 +5,10 @@ class Lexer:
 
     def __init__(self, file):
         self.file = open(file, 'r', encoding="utf8")
-        lexemes = self.__file_to_array()
+        lexemes = self.__file_to_lexeme()
 
     # Checks the file and returns an array of the different lexemes
-    def __file_to_array(self):
+    def __file_to_lexeme(self):
         char_array = []
         lex_array = []
         temp = ""
@@ -18,6 +18,7 @@ class Lexer:
         forming = False
         word = False
         comment = False
+        multicomm = False
 
         # copies all characters into the char_array array
         for line in self.file:
@@ -27,11 +28,19 @@ class Lexer:
         # creates an array of lexemes
         for i in range(len(char_array)):
 
-            # checks if comments
+            # checks if single line comments
             if char_array[i] == "/" and char_array[i + 1] == "/" or comment == True:
                 comment = True
                 if char_array[i] == "\n":
                     comment = False
+                continue
+
+            # checks if multi line comment
+            if multicomm == True and (char_array[i-1] == "*" and char_array[i] == "/" ):
+                multicomm = False
+                continue
+            elif (char_array[i] == "/" and char_array[i+1] == "*") or multicomm == True:
+                multicomm = True
                 continue
 
             # handles strings
@@ -64,7 +73,6 @@ class Lexer:
                     forming = False
                     lex_array.append(temp)
                     temp = ""
-
                 lex_array.append(char_array[i])
                 continue
             elif char_array[i]:
