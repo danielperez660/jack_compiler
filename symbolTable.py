@@ -58,10 +58,10 @@ class SymbolTable:
     # debugging purpose
     def print(self):
 
-        print("Class Scope Table")
+        print("\nClass Scope Table")
         for i in self.class_scope_table:
             print(i)
 
-        print("Method Scope Table")
+        print("\nMethod Scope Table")
         for i in self.method_scope_table:
             print(i)

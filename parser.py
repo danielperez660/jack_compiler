@@ -328,7 +328,7 @@ class Parser:
                         self.table.add_symbol(token, 'method', 'var')
                     else:
                         self.error(token, "redeclaration of identifier")
-                        
+
                 else:
                     self.error(token, "identifier expected")
 
