@@ -1,7 +1,10 @@
-import lexer as lex
+from compiler import lexer as lex
+from compiler import parser as pars
 
-compiled = lex.Token("Main.jack")
+lexer = lex.Token("Main2.jack")
 
-print(compiled.get_next_token())
-print(compiled.peek_next_token())
+for i in lexer.tokens:
+    print(i)
+
+# compiled = pars.Parser("Main2.jack")
 

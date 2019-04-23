@@ -8,6 +8,12 @@ class Token:
         self.lexemes = self.__file_to_lexeme()
         self.tokens = self.__lex_to_tokens()
 
+    # Is called if there is an issue within the tokenisation process
+    @staticmethod
+    def error(reason):
+        print("Error, " + reason)
+        exit(1)
+
     # Checks the file and returns an array of the different lexemes
     def __file_to_lexeme(self):
         char_array = []
@@ -15,7 +21,8 @@ class Token:
         lex_array = []
         temp = ""
         line = 0
-        separator = ['(', ')', '{', '}', ';', '.', ',']
+        i = 0
+        separator = ['(', ')', '{', '}', ';', '.', ',', '[', ']']
 
         # Checks to see if any lexemes are forming
         forming = False
@@ -41,7 +48,7 @@ class Token:
                 continue
 
             # checks if multi line comment
-            if multicomm and (char_array[i-1] == "*" and char_array[i] == "/" ):
+            if multicomm and (char_array[i-1] == "*" and char_array[i] == "/"):
                 multicomm = False
                 continue
             elif (char_array[i] == "/" and char_array[i+1] == "*") or multicomm:
@@ -50,9 +57,16 @@ class Token:
 
             # handles strings
             if word and char_array[i] != '"':
+
+                # Checks to see if there is an open string at the EOF
+                if i == len(char_array) - 1:
+                    self.error("\" expected, open string at EOF")
+
                 temp += char_array[i]
                 continue
+
             elif char_array[i] == '"':
+
                 # checks if final or initial " in string
                 if word:
                     lex_array.append(('string', temp, line_no[i]))
@@ -91,8 +105,9 @@ class Token:
     def __lex_to_tokens(self):
         tokens = []
 
+        # types of tokens
         keyword = ['if', 'let', 'do', 'else', 'while', 'return']
-        symbol = ['(', ')', '{', '}', ';', '.', ',']
+        symbol = ['(', ')', '{', '}', ';', '.', ',', '[', ']']
         components = ['class', 'constructor', 'function', 'method']
         types = ['void', 'int', 'boolean', 'char']
         declar = ['var', 'static', 'field']
@@ -112,6 +127,7 @@ class Token:
             ">": 'moreop'
             }
 
+        # assigns type into a 3 piece tupple
         for i in self.lexemes:
 
             if i[0] in keyword:
@@ -121,9 +137,9 @@ class Token:
                 tokens.append((i[0], i[1], "constant"))
                 continue
             elif i[0] == "string":
-                tokens.append((i[1], i[2], "string"))
+                tokens.append((i[1], i[2], "stringLiteral"))
                 continue
-            elif i[0] in "this":
+            elif i[0] == "this":
                 tokens.append((i[0], i[1], "reference"))
                 continue
             elif i[0] in types:
@@ -142,14 +158,16 @@ class Token:
             elif i[0].isalpha() or i[0][0] == "_":
                 tokens.append((i[0], i[1], "identifier"))
             elif i[0].isnumeric():
-                tokens.append((i[0], i[1], "num"))
+                tokens.append((i[0], i[1], "integerConstant"))
 
         return tokens
 
+    # Allows the parser to get and remove the next token from the token list
     def get_next_token(self):
         temp = self.tokens[0]
         del self.tokens[0]
         return temp
 
+    # Checks the next token but does not remove it from the token list
     def peek_next_token(self):
         return self.tokens[0]
