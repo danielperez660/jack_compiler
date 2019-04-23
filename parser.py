@@ -323,6 +323,12 @@ class Parser:
 
                 if token[2] == 'identifier':
                     self.ok(token)
+
+                    if self.table.find_symbol(token, 'method'):
+                        self.table.add_symbol(token, 'method', 'var')
+                    else:
+                        self.error(token, "redeclaration of identifier")
+                        
                 else:
                     self.error(token, "identifier expected")
 
