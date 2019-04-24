@@ -12,7 +12,7 @@ class Parser:
         self.table = sT.GlobalSymbolTable()
         self.currentTable = ""
 
-        # self.stdLibCompilation()
+        self.stdLibCompilation()
 
         self.Tokens = lex.Token(file)
         self.classDeclar()
@@ -38,12 +38,14 @@ class Parser:
 
             self.Tokens = lex.Token("Array.jack")
             self.currentTable = i.split(".")[0]
+            tokens_list = self.Tokens.tokens
 
-            for j in self.Tokens.tokens:
-                print(j)
-                # if j[0] == 'function' or j[0] == 'method':
-                #     print(j)
-                #     # self.table.add_symbol(j, )
+            # Loops over all the tokens and adds them to their specific library symbol tables
+            for j in range(len(tokens_list)):
+                if tokens_list[j][0] == 'function' or tokens_list[j][0] == 'method':
+                    print(tokens_list[j])
+                    print(tokens_list[j+2])
+                    self.table.std_lib_prep(tokens_list[j+2])
 
             self.table.print()
 
@@ -148,8 +150,8 @@ class Parser:
 
         token = self.Tokens.get_next_token()
 
-        if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier' or\
-                token[2] == 'Object':
+        if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier' or \
+                token[2] == 'ObjectType':
             self.ok(token)
         else:
             self.error(token, "valid type or identifier expected")
@@ -317,8 +319,8 @@ class Parser:
 
         token = self.Tokens.peek_next_token()
 
-        if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier'\
-                or token[2] == 'Object':
+        if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier' \
+                or token[2] == 'ObjectType':
             self.type()
         else:
             self.error(token, "valid type expected")

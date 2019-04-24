@@ -167,11 +167,12 @@ class Token:
                 if tokens[counter - 1][0] == 'var' or tokens[counter - 1][0] == 'function' or \
                         tokens[counter - 1][0] == 'method':
                     type_of = i[0]
-                    tokens.append([i[0], i[1], 'Object'])
+                    tokens.append([i[0], i[1], 'ObjectType'])
                     continue
 
                 # Sets the initial value of the identifier as not initialised
                 tokens.append([i[0], i[1], "identifier", type_of, False])
+
             elif i[0].isnumeric():
                 tokens.append([i[0], i[1], "integerConstant"])
 
