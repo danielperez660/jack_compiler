@@ -1,3 +1,5 @@
+from compiler import lexer as lex
+
 
 class SymbolTable:
 
@@ -5,8 +7,8 @@ class SymbolTable:
 
     def __init__(self):
         self.class_scope_table = []
-        self.method_scope_table = [[('this', None, 'reference'), 0]]
-        self.std_lib_table =
+        self.method_scope_table = [[['this', None, 'reference'], 0]]
+        self.std_lib_table = []
 
         # counters for the class_scope_table
         self.static_counter = 0
@@ -15,6 +17,11 @@ class SymbolTable:
         # counters for the method_scope_table
         self.var_counter = 0
         self.argument_counter = 1
+
+    def std_lib_prep(self, libs):
+
+        for i in libs:
+            print(i)
 
     def add_symbol(self, symbol, table, symb_type):
 
@@ -34,6 +41,29 @@ class SymbolTable:
             elif symb_type == 'argument':
                 self.method_scope_table.append([symbol, self.argument_counter])
                 self.argument_counter += 1
+
+    # Set symbol as initialised
+    def initialise(self, symbol):
+        for i in self.class_scope_table:
+            if symbol[0] == i[0][0]:
+                i[0][4] = True
+
+        for i in self.method_scope_table:
+            if symbol[0] == i[0][0]:
+                i[0][4] = True
+
+    # Check to see if the variable has been initialised, if so return True
+    def init_check(self, symbol):
+
+        for i in self.class_scope_table:
+            if symbol[0] == i[0][0] and i[0][4]:
+                return True
+
+        for i in self.method_scope_table:
+            if symbol[0] == i[0][0] and i[0][4]:
+                return True
+
+        return False
 
     # Checks to see if the identifier has been defined or not, returns false if in table
     def find_symbol(self, symbol, table):

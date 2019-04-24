@@ -10,6 +10,7 @@ class Parser:
         self.Tokens = lex.Token(file)
         print("PARSER INITIALISED")
         self.table = sT.SymbolTable()
+        self.stdLibCompilation()
         self.classDeclar()
         self.table.print()
 
@@ -23,7 +24,10 @@ class Parser:
         exit(0)
 
     def stdLibCompilation(self):
-        stdLibs = ["Array.jack", "Keyboard.jack", "Math.jack"]
+        stdLibs = ["Array.jack", "Keyboard.jack", "Math.jack", "Keyboard.jack", "Memory.jack",
+                   "Output.jack", "Screen.jack", "String.jack", "Sys.jack"]
+
+        self.table.std_lib_prep(stdLibs)
 
     def classDeclar(self):
         token = self.Tokens.get_next_token()
@@ -359,8 +363,9 @@ class Parser:
 
             # Checks to see if the identifier has been defined previously
             if self.table.find_symbol(token, 'method') and self.table.find_symbol(token, 'class'):
-                self.error(token, "variable used has not been defined")
+                self.error(token, "variable used has not been declared")
 
+            self.table.initialise(token)
             self.ok(token)
         else:
             self.error(token, "identifier expected")
@@ -601,7 +606,7 @@ class Parser:
         token = self.Tokens.peek_next_token()
 
         if token[2] == 'identifier':
-
+            self.table.print()
             # Checks to see if the identifier has been defined previously
             if self.table.find_symbol(token, 'method') and self.table.find_symbol(token, 'class'):
                 self.error(token, "variable used has not been defined")
@@ -901,6 +906,11 @@ class Parser:
                 or token[2] == 'stringLiteral' or token[0] == 'true' \
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
                 or token[0] == '(':
+
+            if token[2] == 'identifier':
+                if not self.table.init_check(token):
+                    self.error(token, "variable has not been initialised")
+
             self.ok(token)
         else:
             self.error(token, "integerConstant or Identifier or stringLiteral or 'true' or 'false' or 'null' or "

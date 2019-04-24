@@ -129,37 +129,37 @@ class Token:
             ">": 'moreop'
             }
 
-        # assigns type into a 3 piece tuple
+        # assigns type into a 3 piece list
         for i in self.lexemes:
             counter += 1
             if i[0] in keyword:
-                tokens.append((i[0], i[1], "keyword"))
+                tokens.append([i[0], i[1], "keyword"])
                 continue
             elif i[0] in constant:
-                tokens.append((i[0], i[1], "constant"))
+                tokens.append([i[0], i[1], "constant"])
                 continue
             elif i[0] == "string":
-                tokens.append((i[1], i[2], "stringLiteral"))
+                tokens.append([i[1], i[2], "stringLiteral"])
                 continue
             elif i[0] == "this":
-                tokens.append((i[0], i[1], "reference"))
+                tokens.append([i[0], i[1], "reference"])
                 continue
             elif i[0] in types:
-                tokens.append((i[0], i[1], "type"))
+                tokens.append([i[0], i[1], "type"])
                 type_of = i[0]
                 continue
             elif i[0] in symbol:
-                tokens.append((i[0], i[1], "symbol"))
+                tokens.append([i[0], i[1], "symbol"])
             elif i[0] in ops:
-                tokens.append((i[0], i[1], ops[i[0]]))
+                tokens.append([i[0], i[1], ops[i[0]]])
             elif i[0] in components:
-                tokens.append((i[0], i[1], "component"))
+                tokens.append([i[0], i[1], "component"])
                 continue
             elif i[0] in declar:
-                tokens.append((i[0], i[1], "declaration"))
+                tokens.append([i[0], i[1], "declaration"])
                 continue
             elif i[0] == "EOF":
-                tokens.append((i[0], i[1], "EOF"))
+                tokens.append([i[0], i[1], "EOF"])
                 continue
             elif i[0].isalpha() or i[0][0] == "_":
 
@@ -167,9 +167,10 @@ class Token:
                 if tokens[counter-1][0] == 'var':
                     type_of = i[0]
 
-                tokens.append((i[0], i[1], "identifier", type_of))
+                # Sets the initial value of the identifier as not initialised
+                tokens.append([i[0], i[1], "identifier", type_of, False])
             elif i[0].isnumeric():
-                tokens.append((i[0], i[1], "integerConstant"))
+                tokens.append([i[0], i[1], "integerConstant"])
 
         return tokens
 
