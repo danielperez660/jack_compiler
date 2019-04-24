@@ -6,6 +6,7 @@ class SymbolTable:
     def __init__(self):
         self.class_scope_table = []
         self.method_scope_table = [[('this', None, 'reference'), 0]]
+        self.std_lib_table =
 
         # counters for the class_scope_table
         self.static_counter = 0
@@ -34,6 +35,7 @@ class SymbolTable:
                 self.method_scope_table.append([symbol, self.argument_counter])
                 self.argument_counter += 1
 
+    # Checks to see if the identifier has been defined or not, returns false if in table
     def find_symbol(self, symbol, table):
 
         if table == 'class':
@@ -41,6 +43,7 @@ class SymbolTable:
                 if symbol[0] == i[0][0]:
                     return False
             return True
+
         elif table == 'method':
             for i in self.method_scope_table:
                 if symbol[0] == i[0][0]:

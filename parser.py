@@ -22,6 +22,9 @@ class Parser:
         print("error in line", token[1], "at or near " + token[0] + ", " + message)
         exit(0)
 
+    def stdLibCompilation(self):
+        stdLibs = ["Array.jack", "Keyboard.jack", "Math.jack"]
+
     def classDeclar(self):
         token = self.Tokens.get_next_token()
 
@@ -353,6 +356,11 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if token[2] == 'identifier':
+
+            # Checks to see if the identifier has been defined previously
+            if self.table.find_symbol(token, 'method') and self.table.find_symbol(token, 'class'):
+                self.error(token, "variable used has not been defined")
+
             self.ok(token)
         else:
             self.error(token, "identifier expected")
@@ -593,6 +601,11 @@ class Parser:
         token = self.Tokens.peek_next_token()
 
         if token[2] == 'identifier':
+
+            # Checks to see if the identifier has been defined previously
+            if self.table.find_symbol(token, 'method') and self.table.find_symbol(token, 'class'):
+                self.error(token, "variable used has not been defined")
+
             self.subroutineCall()
         else:
             self.error(token, "'identifier' expected")
