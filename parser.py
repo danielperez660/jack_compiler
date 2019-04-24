@@ -4,15 +4,21 @@ from compiler import GlobalSymbolTable as sT
 
 class Parser:
 
-    # TODO - fix the symbol table class because im stupid and lazy
-
     def __init__(self, file):
         print("PARSER INITIALISED")
 
-        self.table = sT.GlobalSymbolTable()
-        self.currentTable = ""
+        stdLibs = ["Array.jack", "Keyboard.jack", "Math.jack", "Keyboard.jack", "Memory.jack",
+                   "Output.jack", "Screen.jack", "String.jack", "Sys.jack"]
 
-        self.stdLibCompilation()
+        self.table = sT.GlobalSymbolTable()
+        self.currentClass = ""
+        self.currentMethod = ""
+
+        for i in stdLibs:
+            print("\n" + i + "\n")
+            self.Tokens = lex.Token(i)
+            self.classDeclar()
+            self.table.print()
 
         self.Tokens = lex.Token(file)
         self.classDeclar()
@@ -28,27 +34,6 @@ class Parser:
         print("error in line", token[1], "at or near " + token[0] + ", " + message)
         exit(0)
 
-    # Initially sets up symbol tables for std libs
-    def stdLibCompilation(self):
-        stdLibs = ["Array.jack", "Keyboard.jack", "Math.jack", "Keyboard.jack", "Memory.jack",
-                   "Output.jack", "Screen.jack", "String.jack", "Sys.jack"]
-
-        for i in stdLibs:
-            print("Generating table for " + i)
-
-            self.Tokens = lex.Token("Array.jack")
-            self.currentTable = i.split(".")[0]
-            tokens_list = self.Tokens.tokens
-
-            # Loops over all the tokens and adds them to their specific library symbol tables
-            for j in range(len(tokens_list)):
-                if tokens_list[j][0] == 'function' or tokens_list[j][0] == 'method':
-                    print(tokens_list[j])
-                    print(tokens_list[j+2])
-                    self.table.std_lib_prep(tokens_list[j+2])
-
-            self.table.print()
-
     def classDeclar(self):
         token = self.Tokens.get_next_token()
 
@@ -61,6 +46,13 @@ class Parser:
 
         if token[2] == 'identifier':
             self.ok(token)
+
+            # Generates a new table for the class and sets the current one to it
+            self.table.new_table_gen(token[0], 'class', None)
+            self.currentClass = token[0]
+
+            print("Current Class: " + self.currentClass)
+
         else:
             self.error(token, "'identifier' expected")
 
@@ -95,9 +87,10 @@ class Parser:
     def classVarDeclar(self):
 
         token = self.Tokens.get_next_token()
-        class_type = token[0]
+        varType = ""
 
         if token[0] == 'static' or token[0] == 'field':
+            varType = token[0]
             self.ok(token)
         else:
             self.error(token, "'static' or 'field' expected")
@@ -111,11 +104,15 @@ class Parser:
 
         token = self.Tokens.get_next_token()
 
+        # Adds the field/static to the class symbol table or checks if already there
         if token[2] == 'identifier':
             self.ok(token)
+            print("CLASS VAR CHECK")
+            print(token)
 
-            if self.table.find_symbol(token, 'class'):
-                self.table.add_symbol(token, 'class', class_type)
+            if self.table.find_symbol(token, 'class', self.currentClass):
+                print(token)
+                self.table.add_symbol_to()
             else:
                 self.error(token, "redeclaration of identifier")
         else:
@@ -150,8 +147,7 @@ class Parser:
 
         token = self.Tokens.get_next_token()
 
-        if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier' or \
-                token[2] == 'ObjectType':
+        if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier':
             self.ok(token)
         else:
             self.error(token, "valid type or identifier expected")
@@ -179,6 +175,10 @@ class Parser:
 
         if token[2] == 'identifier':
             self.ok(token)
+
+            self.table.new_table_gen(token[0], 'method', self.currentClass)
+            self.currentMethod = token[0]
+            print("Current method: " + self.currentMethod)
         else:
             self.error(token, "identifier expected")
 
@@ -208,14 +208,17 @@ class Parser:
         else:
             self.error(token, "'{' expected")
 
+
     def paramList(self):
 
         token = self.Tokens.peek_next_token()
+        types = ""
 
         if token[0] == ')':
             return
 
         if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier':
+            types = token[0]
             self.type()
         else:
             self.error(token, "valid type expected")
@@ -225,8 +228,8 @@ class Parser:
         if token[2] == 'identifier':
             self.ok(token)
 
-            if self.table.find_symbol(token, 'method'):
-                self.table.add_symbol(token, 'method', 'argument')
+            if self.table.find_symbol(token, 'method', self.currentMethod):
+                self.table.add_symbol_to(token, self.currentMethod, 'argument')
             else:
                 self.error(token, "redeclaration of identifier")
         else:
@@ -271,7 +274,7 @@ class Parser:
         else:
             self.error(token, "'{' expected")
 
-        while self.Tokens.peek_next_token()[0] != '}':
+        while self.Tokens.get_next_token()[0] != '}':
             token = self.Tokens.peek_next_token()
 
             if token[0] == 'var':
@@ -319,8 +322,7 @@ class Parser:
 
         token = self.Tokens.peek_next_token()
 
-        if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier' \
-                or token[2] == 'ObjectType':
+        if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier':
             self.type()
         else:
             self.error(token, "valid type expected")

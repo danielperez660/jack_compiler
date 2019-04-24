@@ -163,12 +163,12 @@ class Token:
                 continue
             elif i[0].isalpha() or i[0][0] == "_":
 
-                # Checks if the identifier is for an Object or not
-                if tokens[counter - 1][0] == 'var' or tokens[counter - 1][0] == 'function' or \
-                        tokens[counter - 1][0] == 'method':
-                    type_of = i[0]
-                    tokens.append([i[0], i[1], 'ObjectType'])
-                    continue
+                # Sets objects as object type
+                if self.lexemes[counter - 1][0] not in types:
+                    if self.lexemes[counter - 1][0] != type_of:
+                        tokens.append([i[0], i[1], "identifier", 'Object', False])
+                        type_of = i[0]
+                        continue
 
                 # Sets the initial value of the identifier as not initialised
                 tokens.append([i[0], i[1], "identifier", type_of, False])

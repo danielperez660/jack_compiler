@@ -1,5 +1,5 @@
-from compiler import MethodSymbolTable as mTable
-from compiler import stdLibSymbolTables as stdTable
+from compiler import MethodSymbolTable as mT
+from compiler import ClassSymbolTable as cT
 
 
 class GlobalSymbolTable:
@@ -7,10 +7,13 @@ class GlobalSymbolTable:
     def __init__(self):
         self.class_scope_table = []
         self.method_scope_tables = [[['this', None, 'reference'], 0]]
-        self.method_tables = []
 
-        self.std_lib_tables = []
+        # All the symbol tables for methods and functions
+        self.method_tables = []
+        self.class_tables = []
+
         self.current_method = 0
+        self.current_table = None
 
         # counters for the class_scope_table
         self.static_counter = 0
@@ -20,30 +23,29 @@ class GlobalSymbolTable:
         self.var_counter = 0
         self.argument_counter = 1
 
-    def std_lib_prep(self, name, libs):
-        current = stdTable.stdLibSymbolTables(name, libs)
-        self.std_lib_tables.append(current)
+    # Generates new symbol table for either class or method
+    def new_table_gen(self, name, meth_class, types):
 
-    def add_symbol(self, symbol, table, symb_type):
+        if meth_class == 'method':
+            print("Created method: " + name + " " + types)
+            current = mT.MethodSymbolTable(name, types)
+            self.method_tables.append(current)
+        else:
+            print("Created class: " + name)
+            current = cT.ClassSymbolTable(name)
+            self.class_tables.append(current)
 
-        # chose if it belongs to the class_scope_table or not
-        if table == 'class':
-            if symb_type == 'static':
-                self.class_scope_table.append([symbol, self.static_counter])
-                self.static_counter += 1
-            elif symb_type == 'field':
-                self.class_scope_table.append([symbol, self.field_counter])
-                self.field_counter += 1
+    # Adds symbol to a specific table
+    def add_symbol_to(self, symbol, table, symb_type):
 
-        elif table == 'method':
-            # self.method_tables[self.current_method].add(symbol, symb_type)
+        # Checks if the value is added to a method or class table
+        for i in self.method_tables:
+            if i.get_name() == table:
+                i.add(symbol, symb_type)
 
-            if symb_type == 'var':
-                self.method_scope_tables.append([symbol, self.var_counter])
-                self.var_counter += 1
-            elif symb_type == 'argument':
-                self.method_scope_tables.append([symbol, self.argument_counter])
-                self.argument_counter += 1
+        for i in self.class_tables:
+            if i.get_name() == table:
+                i.add(symbol, symb_type)
 
     # Set symbol as initialised
     def initialise(self, symbol):
@@ -69,18 +71,19 @@ class GlobalSymbolTable:
         return False
 
     # Checks to see if the identifier has been defined or not, returns false if in table
-    def find_symbol(self, symbol, table):
+    def find_symbol(self, symbol, table, tableName):
 
         if table == 'class':
-            for i in self.class_scope_table:
-                if symbol[0] == i[0][0]:
+            for i in self.class_tables:
+                if i.get_name() == tableName:
                     return False
             return True
 
         elif table == 'method':
-            for i in self.method_scope_tables:
-                if symbol[0] == i[0][0]:
-                    return False
+            for i in self.method_tables:
+                for j in i.get_table():
+                    if j[0][0] == symbol[0]:
+                        return False
             return True
         else:
             # debugging purpose
@@ -95,9 +98,9 @@ class GlobalSymbolTable:
     def print(self):
 
         print("\nClass Scope Table")
-        for i in self.class_scope_table:
-            print(i)
+        for i in self.class_tables:
+            i.print()
 
         print("\nMethod Scope Table")
         for i in self.method_tables:
-            print(i)
+            i.print()
