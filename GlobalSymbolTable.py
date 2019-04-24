@@ -1,27 +1,28 @@
-from compiler import lexer as lex
+from compiler import MethodSymbolTable as mTable
+from compiler import stdLibSymbolTables as stdTable
 
 
-class SymbolTable:
-
-    # TODO - ensure that each method table developed is a different table
+class GlobalSymbolTable:
 
     def __init__(self):
         self.class_scope_table = []
-        self.method_scope_table = [[['this', None, 'reference'], 0]]
-        self.std_lib_table = []
+        self.method_scope_tables = [[['this', None, 'reference'], 0]]
+        self.method_tables = []
+
+        self.std_lib_tables = []
+        self.current_method = 0
 
         # counters for the class_scope_table
         self.static_counter = 0
         self.field_counter = 0
 
-        # counters for the method_scope_table
+        # counters for the method_scope_tables
         self.var_counter = 0
         self.argument_counter = 1
 
-    def std_lib_prep(self, libs):
-
-        for i in libs:
-            print(i)
+    def std_lib_prep(self, name, libs):
+        current = stdTable.stdLibSymbolTables(name, libs)
+        self.std_lib_tables.append(current)
 
     def add_symbol(self, symbol, table, symb_type):
 
@@ -35,11 +36,13 @@ class SymbolTable:
                 self.field_counter += 1
 
         elif table == 'method':
+            # self.method_tables[self.current_method].add(symbol, symb_type)
+
             if symb_type == 'var':
-                self.method_scope_table.append([symbol, self.var_counter])
+                self.method_scope_tables.append([symbol, self.var_counter])
                 self.var_counter += 1
             elif symb_type == 'argument':
-                self.method_scope_table.append([symbol, self.argument_counter])
+                self.method_scope_tables.append([symbol, self.argument_counter])
                 self.argument_counter += 1
 
     # Set symbol as initialised
@@ -48,7 +51,7 @@ class SymbolTable:
             if symbol[0] == i[0][0]:
                 i[0][4] = True
 
-        for i in self.method_scope_table:
+        for i in self.method_scope_tables:
             if symbol[0] == i[0][0]:
                 i[0][4] = True
 
@@ -59,7 +62,7 @@ class SymbolTable:
             if symbol[0] == i[0][0] and i[0][4]:
                 return True
 
-        for i in self.method_scope_table:
+        for i in self.method_scope_tables:
             if symbol[0] == i[0][0] and i[0][4]:
                 return True
 
@@ -75,7 +78,7 @@ class SymbolTable:
             return True
 
         elif table == 'method':
-            for i in self.method_scope_table:
+            for i in self.method_scope_tables:
                 if symbol[0] == i[0][0]:
                     return False
             return True
@@ -96,5 +99,5 @@ class SymbolTable:
             print(i)
 
         print("\nMethod Scope Table")
-        for i in self.method_scope_table:
+        for i in self.method_tables:
             print(i)

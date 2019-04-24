@@ -1,5 +1,5 @@
 from compiler import lexer as lex
-from compiler import symbolTable as sT
+from compiler import GlobalSymbolTable as sT
 
 
 class Parser:
@@ -7,11 +7,16 @@ class Parser:
     # TODO - fix the symbol table class because im stupid and lazy
 
     def __init__(self, file):
-        self.Tokens = lex.Token(file)
         print("PARSER INITIALISED")
-        self.table = sT.SymbolTable()
-        self.stdLibCompilation()
+
+        self.table = sT.GlobalSymbolTable()
+        self.currentTable = ""
+
+        # self.stdLibCompilation()
+
+        self.Tokens = lex.Token(file)
         self.classDeclar()
+
         self.table.print()
 
     @staticmethod
@@ -23,11 +28,24 @@ class Parser:
         print("error in line", token[1], "at or near " + token[0] + ", " + message)
         exit(0)
 
+    # Initially sets up symbol tables for std libs
     def stdLibCompilation(self):
         stdLibs = ["Array.jack", "Keyboard.jack", "Math.jack", "Keyboard.jack", "Memory.jack",
                    "Output.jack", "Screen.jack", "String.jack", "Sys.jack"]
 
-        self.table.std_lib_prep(stdLibs)
+        for i in stdLibs:
+            print("Generating table for " + i)
+
+            self.Tokens = lex.Token("Array.jack")
+            self.currentTable = i.split(".")[0]
+
+            for j in self.Tokens.tokens:
+                print(j)
+                # if j[0] == 'function' or j[0] == 'method':
+                #     print(j)
+                #     # self.table.add_symbol(j, )
+
+            self.table.print()
 
     def classDeclar(self):
         token = self.Tokens.get_next_token()
@@ -130,7 +148,8 @@ class Parser:
 
         token = self.Tokens.get_next_token()
 
-        if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier':
+        if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier' or\
+                token[2] == 'Object':
             self.ok(token)
         else:
             self.error(token, "valid type or identifier expected")
@@ -298,7 +317,8 @@ class Parser:
 
         token = self.Tokens.peek_next_token()
 
-        if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier':
+        if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier'\
+                or token[2] == 'Object':
             self.type()
         else:
             self.error(token, "valid type expected")
@@ -306,12 +326,13 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if token[2] == 'identifier':
-            self.ok(token)
 
             if self.table.find_symbol(token, 'method'):
                 self.table.add_symbol(token, 'method', 'var')
             else:
                 self.error(token, "redeclaration of identifier")
+
+            self.ok(token)
         else:
             self.error(token, "'identifier' expected")
 

@@ -34,8 +34,8 @@ class Token:
         for lines in self.file:
             line += 1
             for char in lines:
-                    char_array.append(char)
-                    line_no.append(line)
+                char_array.append(char)
+                line_no.append(line)
 
         # creates an array of lexemes
         for i in range(len(char_array)):
@@ -48,10 +48,10 @@ class Token:
                 continue
 
             # checks if multi line comment
-            if multicomm and (char_array[i-1] == "*" and char_array[i] == "/"):
+            if multicomm and (char_array[i - 1] == "*" and char_array[i] == "/"):
                 multicomm = False
                 continue
-            elif (char_array[i] == "/" and char_array[i+1] == "*") or multicomm:
+            elif (char_array[i] == "/" and char_array[i + 1] == "*") or multicomm:
                 multicomm = True
                 continue
 
@@ -127,7 +127,7 @@ class Token:
             "%": 'modop',
             "<": 'lessop',
             ">": 'moreop'
-            }
+        }
 
         # assigns type into a 3 piece list
         for i in self.lexemes:
@@ -164,8 +164,11 @@ class Token:
             elif i[0].isalpha() or i[0][0] == "_":
 
                 # Checks if the identifier is for an Object or not
-                if tokens[counter-1][0] == 'var':
+                if tokens[counter - 1][0] == 'var' or tokens[counter - 1][0] == 'function' or \
+                        tokens[counter - 1][0] == 'method':
                     type_of = i[0]
+                    tokens.append([i[0], i[1], 'Object'])
+                    continue
 
                 # Sets the initial value of the identifier as not initialised
                 tokens.append([i[0], i[1], "identifier", type_of, False])
