@@ -76,15 +76,18 @@ class GlobalSymbolTable:
         if table == 'class':
             for i in self.class_tables:
                 if i.get_name() == tableName:
-                    return False
-            return True
+                    for j in i.get_table():
+                        if j[0][0] == symbol[0]:
+                            return False
+                    return True
 
         elif table == 'method':
             for i in self.method_tables:
-                for j in i.get_table():
-                    if j[0][0] == symbol[0]:
-                        return False
-            return True
+                if i.get_name() == tableName:
+                    for j in i.get_table():
+                        if j[0][0] == symbol[0]:
+                            return False
+                    return True
         else:
             # debugging purpose
             self.error(symbol, " identifier expected. Does not belong in symbolTable")

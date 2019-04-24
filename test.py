@@ -1,10 +1,10 @@
 from compiler import lexer as lex
 from compiler import parser as pars
-
-lexer = lex.Token("Keyboard.jack")
-
-for i in lexer.tokens:
-    print(i)
+#
+# lexer = lex.Token("Output.jack")
+#
+# for i in lexer.tokens:
+#     print(i)
 
 print("\nLEXER TEST PASSED\n")
 

@@ -7,7 +7,7 @@ class Parser:
     def __init__(self, file):
         print("PARSER INITIALISED")
 
-        stdLibs = ["Array.jack", "Keyboard.jack", "Math.jack", "Keyboard.jack", "Memory.jack",
+        stdLibs = ["Array.jack", "Keyboard.jack", "Math.jack", "Memory.jack",
                    "Output.jack", "Screen.jack", "String.jack", "Sys.jack"]
 
         self.table = sT.GlobalSymbolTable()
@@ -87,10 +87,10 @@ class Parser:
     def classVarDeclar(self):
 
         token = self.Tokens.get_next_token()
-        varType = ""
+        types = ""
 
         if token[0] == 'static' or token[0] == 'field':
-            varType = token[0]
+            types = token[0]
             self.ok(token)
         else:
             self.error(token, "'static' or 'field' expected")
@@ -107,12 +107,9 @@ class Parser:
         # Adds the field/static to the class symbol table or checks if already there
         if token[2] == 'identifier':
             self.ok(token)
-            print("CLASS VAR CHECK")
-            print(token)
 
             if self.table.find_symbol(token, 'class', self.currentClass):
-                print(token)
-                self.table.add_symbol_to()
+                self.table.add_symbol_to(token, self.currentClass, types)
             else:
                 self.error(token, "redeclaration of identifier")
         else:
@@ -208,17 +205,14 @@ class Parser:
         else:
             self.error(token, "'{' expected")
 
-
     def paramList(self):
 
         token = self.Tokens.peek_next_token()
-        types = ""
 
         if token[0] == ')':
             return
 
         if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier':
-            types = token[0]
             self.type()
         else:
             self.error(token, "valid type expected")
@@ -227,7 +221,6 @@ class Parser:
 
         if token[2] == 'identifier':
             self.ok(token)
-
             if self.table.find_symbol(token, 'method', self.currentMethod):
                 self.table.add_symbol_to(token, self.currentMethod, 'argument')
             else:
@@ -258,8 +251,8 @@ class Parser:
                 if token[2] == 'identifier':
                     self.ok(token)
 
-                    if self.table.find_symbol(token, 'method'):
-                        self.table.add_symbol(token, 'method', 'argument')
+                    if self.table.find_symbol(token, 'method', self.currentMethod):
+                        self.table.add_symbol_to(token, self.currentMethod, 'argument')
                     else:
                         self.error(token, "redeclaration of identifier")
                 else:
@@ -274,7 +267,10 @@ class Parser:
         else:
             self.error(token, "'{' expected")
 
-        while self.Tokens.get_next_token()[0] != '}':
+        token = self.Tokens.peek_next_token()
+
+        while token[0] != '}':
+
             token = self.Tokens.peek_next_token()
 
             if token[0] == 'var':
@@ -291,6 +287,8 @@ class Parser:
                 self.returnStatement()
             else:
                 self.error(token, "statement expected")
+
+        token = self.Tokens.get_next_token()
 
     def statement(self):
 
@@ -331,8 +329,8 @@ class Parser:
 
         if token[2] == 'identifier':
 
-            if self.table.find_symbol(token, 'method'):
-                self.table.add_symbol(token, 'method', 'var')
+            if self.table.find_symbol(token, 'method', self.currentMethod):
+                self.table.add_symbol_to(token, self.currentMethod, 'var')
             else:
                 self.error(token, "redeclaration of identifier")
 
@@ -356,8 +354,8 @@ class Parser:
                 if token[2] == 'identifier':
                     self.ok(token)
 
-                    if self.table.find_symbol(token, 'method'):
-                        self.table.add_symbol(token, 'method', 'var')
+                    if self.table.find_symbol(token, 'method', self.currentMethod):
+                        self.table.add_symbol_to(token, self.currentMethod, 'var')
                     else:
                         self.error(token, "redeclaration of identifier")
 
@@ -387,10 +385,13 @@ class Parser:
         if token[2] == 'identifier':
 
             # Checks to see if the identifier has been defined previously
-            if self.table.find_symbol(token, 'method') and self.table.find_symbol(token, 'class'):
+            if self.table.find_symbol(token, 'method', self.currentMethod) and\
+                    self.table.find_symbol(token, 'class', self.currentClass)\
+                    and token[3] != 'Object':
                 self.error(token, "variable used has not been declared")
+            elif token[3] != 'Object':
+                self.table.initialise(token)
 
-            self.table.initialise(token)
             self.ok(token)
         else:
             self.error(token, "identifier expected")
@@ -631,9 +632,11 @@ class Parser:
         token = self.Tokens.peek_next_token()
 
         if token[2] == 'identifier':
-            self.table.print()
+
             # Checks to see if the identifier has been defined previously
-            if self.table.find_symbol(token, 'method') and self.table.find_symbol(token, 'class'):
+            if self.table.find_symbol(token, 'method', self.currentMethod) and\
+                    self.table.find_symbol(token, 'class', self.currentClass)\
+                    and token[3] != 'Object':
                 self.error(token, "variable used has not been defined")
 
             self.subroutineCall()
@@ -688,8 +691,11 @@ class Parser:
                 or token[0] == '(':
             self.expression()
 
-        token = self.Tokens.get_next_token()
+        # TODO - FIX THE LOOP NOT WORKING WITH MULTIPLE PARAMETERS
 
+        print(token)
+        token = self.Tokens.get_next_token()
+        print(token)
         if token[0] == ')':
             self.ok(token)
         else:
@@ -932,7 +938,7 @@ class Parser:
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
                 or token[0] == '(':
 
-            if token[2] == 'identifier':
+            if token[2] == 'identifier' and token[3] != 'Object':
                 if not self.table.init_check(token):
                     self.error(token, "variable has not been initialised")
 
