@@ -23,3 +23,7 @@ class MethodSymbolTable(sT.SymbolTable):
         elif symb_type == 'argument':
             self.scope_table.append([symbol[0], symbol[3], 'argument', self.argument_counter])
             self.argument_counter += 1
+
+        print("Adding: ", end=" ")
+        print(symbol, end=" ")
+        print("to " + self.name)

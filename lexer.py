@@ -163,6 +163,8 @@ class Token:
                 continue
             elif i[0].isalpha() or i[0][0] == "_":
 
+                # TODO fix issue where we assign type object to reused identifiers
+
                 # Sets objects as object type
                 if self.lexemes[counter - 1][0] not in types:
                     if self.lexemes[counter - 1][0] != type_of:

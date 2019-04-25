@@ -1,6 +1,6 @@
 from compiler import lexer as lex
 from compiler import parser as pars
-#
+
 # lexer = lex.Token("Output.jack")
 #
 # for i in lexer.tokens:
