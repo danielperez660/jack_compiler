@@ -131,7 +131,6 @@ class Token:
 
         # assigns type into a 3 piece list
         for i in self.lexemes:
-            print(i)
             counter += 1
             if i[0] in keyword:
                 tokens.append([i[0], i[1], "keyword"])
