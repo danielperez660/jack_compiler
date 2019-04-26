@@ -164,6 +164,7 @@ class Token:
             elif i[0][0].isalpha() or i[0][0] == "_":
 
                 # TODO fix issue where we assign type object to reused identifiers
+                # Maybe make a list with all the initialised items and then copy the type?
 
                 # Sets objects as object type
                 if self.lexemes[counter - 1][0] not in types:
