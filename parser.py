@@ -421,7 +421,9 @@ class Parser:
 
             token = self.Tokens.get_next_token()
 
-            if token[0] != ']':
+            if token[0] == ']':
+                self.ok(token)
+            else:
                 self.error(token, "']' expected")
 
         token = self.Tokens.get_next_token()
@@ -437,11 +439,8 @@ class Parser:
                 token[2] == 'integerConstant' or token[2] == 'identifier' \
                 or token[2] == 'stringLiteral' or token[0] == 'true' \
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                or token[0] == '(' or token[0] == '[':
+                or token[0] == '(':
             self.expression()
-
-        print(token, end=" ")
-        print("Should be printing ;")
 
         token = self.Tokens.get_next_token()
 
@@ -472,7 +471,7 @@ class Parser:
                 token[2] == 'integerConstant' or token[2] == 'identifier' \
                 or token[2] == 'stringLiteral' or token[0] == 'true' \
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                or token[0] == '(' or token[0] == '[':
+                or token[0] == '(':
             self.expression()
         else:
             self.error(token, "expression expected")
@@ -777,7 +776,7 @@ class Parser:
                 token[2] == 'integerConstant' or token[2] == 'identifier' \
                 or token[2] == 'stringLiteral' or token[0] == 'true' \
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                or token[0] == '(' or token[0] == '[':
+                or token[0] == '(':
             self.relationalExpression()
         else:
             self.error(token, "relationalExpression expected")
@@ -800,7 +799,7 @@ class Parser:
                         token[2] == 'integerConstant' or token[2] == 'identifier' \
                         or token[2] == 'stringLiteral' or token[0] == 'true' \
                         or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                        or token[0] == '(' or token[0] == '[':
+                        or token[0] == '(':
                     self.relationalExpression()
                 else:
                     self.error(token, "expression expected")
@@ -815,7 +814,7 @@ class Parser:
                 token[2] == 'integerConstant' or token[2] == 'identifier' \
                 or token[2] == 'stringLiteral' or token[0] == 'true' \
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                or token[0] == '(' or token[0] == '[':
+                or token[0] == '(':
             self.arithmeticExpression()
         else:
             self.error(token, "arithmeticExpression expected")
@@ -838,7 +837,7 @@ class Parser:
                         token[2] == 'integerConstant' or token[2] == 'identifier' \
                         or token[2] == 'stringLiteral' or token[0] == 'true' \
                         or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                        or token[0] == '(' or token[0] == '[':
+                        or token[0] == '(':
                     self.arithmeticExpression()
                 else:
                     self.error(token, "arithmeticExpression expected")
@@ -853,7 +852,7 @@ class Parser:
                 token[2] == 'integerConstant' or token[2] == 'identifier' \
                 or token[2] == 'stringLiteral' or token[0] == 'true' \
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                or token[0] == '(' or token[0] == '[':
+                or token[0] == '(':
             self.term()
         else:
             self.error(token, "term expected")
@@ -876,7 +875,7 @@ class Parser:
                         token[2] == 'integerConstant' or token[2] == 'identifier' \
                         or token[2] == 'stringLiteral' or token[0] == 'true' \
                         or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                        or token[0] == '(' or token[0] == '[':
+                        or token[0] == '(':
                     self.term()
                 else:
                     self.error(token, "term expected")
@@ -891,14 +890,12 @@ class Parser:
                 token[2] == 'integerConstant' or token[2] == 'identifier' \
                 or token[2] == 'stringLiteral' or token[0] == 'true' \
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                or token[0] == '(' or token[0] == '[':
+                or token[0] == '(':
             self.factor()
         else:
             self.error(token, "factor expected")
 
         token = self.Tokens.peek_next_token()
-
-        # TODO fix issue with multiple factors being taken
 
         if token[0] == '*' or token[0] == '/':
             while token[0] == '*' or token[0] == '/':
@@ -916,7 +913,7 @@ class Parser:
                         token[2] == 'integerConstant' or token[2] == 'identifier' \
                         or token[2] == 'stringLiteral' or token[0] == 'true' \
                         or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                        or token[0] == '(' or token[0] == '[':
+                        or token[0] == '(':
                     self.factor()
                 else:
                     self.error(token, "factor expected")
@@ -935,19 +932,21 @@ class Parser:
         if token[2] == 'integerConstant' or token[2] == 'identifier' \
                 or token[2] == 'stringLiteral' or token[0] == 'true' \
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                or token[0] == '(' or token[0] == '[':
+                or token[0] == '(':
             self.operand()
         else:
             self.error(token, "operand expected")
 
     def operand(self):
+
         token = self.Tokens.get_next_token()
 
         if token[2] == 'integerConstant' or token[2] == 'identifier' \
                 or token[2] == 'stringLiteral' or token[0] == 'true' \
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                or token[0] == '(' or token[0] == '[':
+                or token[0] == '(':
 
+            self.ok(token)
             if token[2] == 'identifier' and token[3] != 'Object':
                 if not self.table.init_check(token):
                     self.error(token, "variable has not been initialised")
@@ -958,6 +957,47 @@ class Parser:
 
         if token[2] == 'identifier':
             token = self.Tokens.peek_next_token()
+            if token[0] == '[':
+                token = self.Tokens.get_next_token()
+                self.ok(token)
+
+                token = self.Tokens.peek_next_token()
+
+                if token[2] == 'integerConstant' or token[2] == 'identifier' \
+                        or token[2] == 'stringLiteral' or token[0] == 'true' \
+                        or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
+                        or token[0] == '(':
+                    self.expression()
+                else:
+                    self.error(token, "expression expected")
+
+                token = self.Tokens.get_next_token()
+
+                if token[0] == ']':
+                    self.ok(token)
+                else:
+                    self.error(token, "] expected")
+
+            if token[0] == '(':
+                token = self.Tokens.get_next_token()
+                self.ok(token)
+
+                token = self.Tokens.peek_next_token()
+
+                if token[2] == 'integerConstant' or token[2] == 'identifier' \
+                        or token[2] == 'stringLiteral' or token[0] == 'true' \
+                        or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
+                        or token[0] == '(':
+                    self.expressionList()
+                else:
+                    self.error(token, "expressionList expected")
+
+                token = self.Tokens.get_next_token()
+
+                if token[0] == ')':
+                    self.ok(token)
+                else:
+                    self.error(token, ") expected")
 
             if token[0] == '.':
                 if token[0] == '.':
@@ -965,60 +1005,71 @@ class Parser:
                     self.ok(token)
                 else:
                     self.error(token, "'.' expected")
+                token = self.Tokens.get_next_token()
 
-            token = self.Tokens.get_next_token()
+                if token[2] == 'identifier':
+                    self.ok(token)
+                else:
+                    self.error(token, "identifier expected")
 
-            if token[2] == 'identifier':
-                self.ok(token)
-            else:
-                self.error(token, "identifier expected")
+                token = self.Tokens.peek_next_token()
 
-        elif token[0] == '[':
-            if token[0] == '[':
-                self.ok(token)
-            else:
-                self.error(token, "'[' expected")
+                if token[0] == '[':
+                    token = self.Tokens.get_next_token()
+                    self.ok(token)
 
-            token = self.Tokens.peek_next_token()
+                    token = self.Tokens.peek_next_token()
 
-            if token[0] == '-' or token[0] == '~' or \
-                    token[2] == 'integerConstant' or token[2] == 'identifier' \
+                    if token[2] == 'integerConstant' or token[2] == 'identifier' \
+                            or token[2] == 'stringLiteral' or token[0] == 'true' \
+                            or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
+                            or token[0] == '(':
+                        self.expression()
+                    else:
+                        self.error(token, "expression expected")
+
+                    token = self.Tokens.get_next_token()
+
+                    if token[0] == ']':
+                        self.ok(token)
+                    else:
+                        self.error(token, "] expected")
+
+                if token[0] == '(':
+                    token = self.Tokens.get_next_token()
+                    self.ok(token)
+
+                    token = self.Tokens.peek_next_token()
+
+                    if token[2] == 'integerConstant' or token[2] == 'identifier' \
+                            or token[2] == 'stringLiteral' or token[0] == 'true' \
+                            or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
+                            or token[0] == '(':
+                        self.expressionList()
+                    else:
+                        self.error(token, "expressionList expected")
+
+                    token = self.Tokens.get_next_token()
+
+                    if token[0] == ')':
+                        self.ok(token)
+                    else:
+                        self.error(token, ") expected")
+
+        if token[0] == '(':
+            self.Tokens.peek_next_token()
+
+            if token[2] == 'integerConstant' or token[2] == 'identifier' \
                     or token[2] == 'stringLiteral' or token[0] == 'true' \
                     or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                    or token[0] == '(' or token[0] == '[':
+                    or token[0] == '(':
                 self.expression()
             else:
                 self.error(token, "expression expected")
 
             token = self.Tokens.get_next_token()
 
-            if token[0] == ']':
-                self.ok(token)
-            else:
-                self.error(token, "']' expected")
-
-        elif token[0] == '(':
-            if token[0] == '(':
-                self.ok(token)
-            else:
-                self.error(token, "'(' expected")
-
-            token = self.Tokens.peek_next_token()
-
-            if token[0] == '-' or token[0] == '~' or \
-                    token[2] == 'integerConstant' or token[2] == 'identifier' \
-                    or token[2] == 'stringLiteral' or token[0] == 'true' \
-                    or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                    or token[0] == '(' or token[0] == '[':
-                self.expressionList()
-            else:
-                self.error(token, "expressionList expected")
-
-            token = self.Tokens.get_next_token()
-
             if token[0] == ')':
                 self.ok(token)
             else:
-                self.error(token, "')' expected")
-        else:
-            self.ok(token)
+                self.error(token, ") expected")
