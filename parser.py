@@ -22,7 +22,7 @@ class Parser:
         self.Tokens = lex.Token(file)
         self.classDeclar()
 
-        self.table.print()
+        # self.table.print()
 
     @staticmethod
     def ok(token):
@@ -389,13 +389,16 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if token[2] == 'identifier':
+
             # Checks to see if the identifier has been defined previously
             if self.table.find_symbol(token, 'method', self.currentMethod) and \
                     self.table.find_symbol(token, 'class', self.currentClass) \
                     and token[3] != 'Object':
                 self.error(token, "variable used has not been declared")
+
             elif token[3] != 'Object':
-                self.table.initialise(token)
+                print("Initialising: " + token[0])
+                self.table.initialise(token, self.currentMethod, self.currentClass)
 
             self.ok(token)
         else:
@@ -948,7 +951,7 @@ class Parser:
             self.ok(token)
 
             if token[2] == 'identifier' and token[3] != 'Object':
-                if self.table.init_check(token):
+                if not self.table.init_check(token, self.currentMethod, self.currentClass):
                     self.error(token, "variable has not been initialised")
 
         else:

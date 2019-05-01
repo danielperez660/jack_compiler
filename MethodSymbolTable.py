@@ -18,10 +18,10 @@ class MethodSymbolTable(sT.SymbolTable):
     def add(self, symbol, symb_type):
 
         if symb_type == 'var':
-            self.scope_table.append([symbol[0], symbol[3], 'var', self.var_counter])
+            self.scope_table.append([symbol[0], symbol[3], 'var', self.var_counter, symbol[4]])
             self.var_counter += 1
         elif symb_type == 'argument':
-            self.scope_table.append([symbol[0], symbol[3], 'argument', self.argument_counter])
+            self.scope_table.append([symbol[0], symbol[3], 'argument', self.argument_counter, True])
             self.argument_counter += 1
 
         print("Adding: ", end=" ")

@@ -48,25 +48,36 @@ class GlobalSymbolTable:
                 i.add(symbol, symb_type)
 
     # Set symbol as initialised
-    def initialise(self, symbol):
-        for i in self.class_scope_table:
-            if symbol[0] == i[0][0]:
-                i[0][4] = True
+    def initialise(self, symbol, curr_method, curr_class):
 
-        for i in self.method_scope_tables:
-            if symbol[0] == i[0][0]:
-                i[0][4] = True
+        print(curr_method + curr_class)
+
+        for i in self.class_tables:
+            if i.get_name() == curr_class:
+                for j in i.get_table():
+                    if j[0] == symbol[0]:
+                        j[4] = True
+
+        for i in self.method_tables:
+            if i.get_name() == curr_method:
+                for j in i.get_table():
+                    if j[0] == symbol[0]:
+                        j[4] = True
 
     # Check to see if the variable has been initialised, if so return True
-    def init_check(self, symbol):
+    def init_check(self, symbol, curr_method, curr_class):
 
-        for i in self.class_scope_table:
-            if symbol[0] == i[0][0] and i[0][4]:
-                return True
+        for i in self.class_tables:
+            if i.get_name() == curr_class:
+                for j in i.get_table():
+                    if j[0] == symbol[0] and j[4] != False:
+                        return True
 
-        for i in self.method_scope_tables:
-            if symbol[0] == i[0][0] and i[0][4]:
-                return True
+        for i in self.method_tables:
+            if i.get_name() == curr_method:
+                for j in i.get_table():
+                    if j[0] == symbol[0] and j[4] != False:
+                        return True
 
         return False
 
@@ -76,9 +87,8 @@ class GlobalSymbolTable:
         if table == 'class':
             for i in self.class_tables:
                 if i.get_name() == tableName:
-                    print("Found same table")
                     for j in i.get_table():
-                        if j[0][0] == symbol[0]:
+                        if j[0] == symbol[0]:
                             return False
                     return True
 

@@ -15,8 +15,12 @@ class ClassSymbolTable(sT.SymbolTable):
     def add(self, symbol, symb_type):
 
         if symb_type == 'static':
-            self.scope_table.append([symbol, 'static', self.static_counter])
+            self.scope_table.append([symbol[0], symbol[3], 'static', self.static_counter, symbol[4]])
             self.static_counter += 1
         elif symb_type == 'field':
-            self.scope_table.append([symbol, 'field', self.field_counter])
+            self.scope_table.append([symbol[0], symbol[3], 'field', self.field_counter, symbol[4]])
             self.field_counter += 1
+
+        print("Adding: ", end=" ")
+        print(symbol, end=" ")
+        print("to " + self.name)
