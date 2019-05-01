@@ -103,11 +103,13 @@ class Token:
         return lex_array
 
     def __lex_to_tokens(self):
+        assigned_idents = []
         tokens = []
         type_of = None
         counter = -1
 
         # types of tokens
+        std_lib = ['Math', 'String', 'Array', 'Output', 'Keyboard', 'Screen', 'Memory', 'Sys']
         keyword = ['if', 'let', 'do', 'else', 'while', 'return']
         symbol = ['(', ')', '{', '}', ';', '.', ',', '[', ']']
         components = ['class', 'constructor', 'function', 'method']
@@ -163,15 +165,16 @@ class Token:
                 continue
             elif i[0][0].isalpha() or i[0][0] == "_":
 
-                # TODO fix issue where we assign type object to reused identifiers
-                # Maybe make a list with all the initialised items and then copy the type?
+                if i[0] in std_lib:
+                    tokens.append([i[0], i[1], "identifier", 'Object', False])
+                    type_of = i[0]
+                    continue
 
-                # Sets objects as object type
-                if self.lexemes[counter - 1][0] not in types:
-                    if self.lexemes[counter - 1][0] != type_of:
-                        tokens.append([i[0], i[1], "identifier", 'Object', False])
-                        type_of = i[0]
-                        continue
+                for j in assigned_idents:
+                    if i[0] == j[0]:
+                        type_of = j[1]
+                else:
+                    assigned_idents.append([i[0], type_of])
 
                 # Sets the initial value of the identifier as not initialised
                 tokens.append([i[0], i[1], "identifier", type_of, False])

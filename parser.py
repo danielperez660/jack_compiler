@@ -18,7 +18,6 @@ class Parser:
             print("\n" + i + "\n")
             self.Tokens = lex.Token(i)
             self.classDeclar()
-            self.table.print()
 
         self.Tokens = lex.Token(file)
         self.classDeclar()
@@ -220,6 +219,7 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if token[2] == 'identifier':
+
             self.ok(token)
             if self.table.find_symbol(token, 'method', self.currentMethod):
                 self.table.add_symbol_to(token, self.currentMethod, 'argument')
@@ -389,7 +389,6 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if token[2] == 'identifier':
-
             # Checks to see if the identifier has been defined previously
             if self.table.find_symbol(token, 'method', self.currentMethod) and \
                     self.table.find_symbol(token, 'class', self.currentClass) \
@@ -947,8 +946,9 @@ class Parser:
                 or token[0] == '(':
 
             self.ok(token)
+
             if token[2] == 'identifier' and token[3] != 'Object':
-                if not self.table.init_check(token):
+                if self.table.init_check(token):
                     self.error(token, "variable has not been initialised")
 
         else:

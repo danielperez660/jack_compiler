@@ -76,8 +76,9 @@ class GlobalSymbolTable:
         if table == 'class':
             for i in self.class_tables:
                 if i.get_name() == tableName:
+                    print("Found same table")
                     for j in i.get_table():
-                        if j[0] == symbol[0]:
+                        if j[0][0] == symbol[0]:
                             return False
                     return True
 
