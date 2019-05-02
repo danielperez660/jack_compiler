@@ -6,6 +6,10 @@ class Parser:
 
     def __init__(self, file):
         print("PARSER INITIALISED")
+        self.std_check = False
+        self.file = open("compiled.txt", "w")
+
+        self.token_assigning = None
 
         stdLibs = ["Array.jack", "Keyboard.jack", "Math.jack", "Memory.jack",
                    "Output.jack", "Screen.jack", "String.jack", "Sys.jack"]
@@ -19,10 +23,13 @@ class Parser:
             self.Tokens = lex.Token(i)
             self.classDeclar()
 
+        self.std_check = True
+
         self.Tokens = lex.Token(file)
         self.classDeclar()
 
-        # self.table.print()
+        self.table.print()
+        self.file.close()
 
     @staticmethod
     def ok(token):
@@ -171,10 +178,11 @@ class Parser:
 
         if token[2] == 'identifier':
             self.ok(token)
-
+            self.token_assigning = token
             self.table.new_table_gen(token[0], 'method', self.currentClass)
             self.currentMethod = token[0]
             print("Current method: " + self.currentMethod)
+
         else:
             self.error(token, "identifier expected")
 
@@ -194,6 +202,8 @@ class Parser:
 
         if token[0] == ')':
             self.ok(token)
+            self.write_function(self.currentClass + '.' + self.token_assigning[0],
+                                self.table.argument_count(self.token_assigning[0], self.currentClass))
         else:
             self.error(token, "')' expected")
 
@@ -207,9 +217,6 @@ class Parser:
     def paramList(self):
 
         token = self.Tokens.peek_next_token()
-
-        if token[0] == ')':
-            return
 
         if token[0] == 'int' or token[0] == 'char' or token[0] == 'boolean' or token[2] == 'identifier':
             self.type()
@@ -257,6 +264,7 @@ class Parser:
                         self.error(token, "redeclaration of identifier")
                 else:
                     self.error(token, "identifier expected")
+
 
     def subroutineBody(self):
 
@@ -389,7 +397,7 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if token[2] == 'identifier':
-
+            print(token)
             # Checks to see if the identifier has been defined previously
             if self.table.find_symbol(token, 'method', self.currentMethod) and \
                     self.table.find_symbol(token, 'class', self.currentClass) \
@@ -400,6 +408,7 @@ class Parser:
                 print("Initialising: " + token[0])
                 self.table.initialise(token, self.currentMethod, self.currentClass)
 
+            self.token_assigning = token
             self.ok(token)
         else:
             self.error(token, "identifier expected")
@@ -445,6 +454,9 @@ class Parser:
             self.expression()
 
         token = self.Tokens.get_next_token()
+
+        x, y = self.table.find_symbol_id(self.token_assigning, self.currentClass, self.currentMethod)
+        self.write_pop(x, y)
 
         if token[0] == ';':
             self.ok(token)
@@ -641,20 +653,19 @@ class Parser:
             self.error(token, "'do' expected")
 
         token = self.Tokens.peek_next_token()
+        temp = token
 
         if token[2] == 'identifier':
-
-            # Checks to see if the identifier has been defined previously
-            if self.table.find_symbol(token, 'method', self.currentMethod) and \
-                    self.table.find_symbol(token, 'class', self.currentClass) \
-                    and token[3] != 'Object':
-                self.error(token, "variable used has not been defined")
-
             self.subroutineCall()
         else:
             self.error(token, "'identifier' expected")
 
         token = self.Tokens.get_next_token()
+
+        if self.token_assigning is not None:
+            self.write_call(temp[0] + '.' + self.token_assigning, self.table.argument_count(self.token_assigning, temp[0]))
+        else:
+            self.write_call(temp[0], self.table.argument_count(token[0], self.currentClass))
 
         if token[0] == ';':
             self.ok(token)
@@ -682,6 +693,8 @@ class Parser:
             token = self.Tokens.get_next_token()
 
             if token[2] == 'identifier':
+                methods = token[0]
+                self.token_assigning = methods
                 self.ok(token)
             else:
                 self.error(token, "identifier expected")
@@ -847,7 +860,7 @@ class Parser:
                 token = self.Tokens.peek_next_token()
 
     def arithmeticExpression(self):
-
+        operation = None
         token = self.Tokens.peek_next_token()
 
         if token[0] == '-' or token[0] == '~' or \
@@ -868,6 +881,7 @@ class Parser:
 
                 if token[0] == '+' or token[0] == '-':
                     self.ok(token)
+                    operation = token[0]
                 else:
                     self.error(token, "'+' or '-' expected")
 
@@ -884,8 +898,13 @@ class Parser:
 
                 token = self.Tokens.peek_next_token()
 
-    def term(self):
+            if operation == '+':
+                self.write_bool('add')
+            elif operation == '-':
+                self.write_bool('sub')
 
+    def term(self):
+        operation = None
         token = self.Tokens.peek_next_token()
 
         if token[0] == '-' or token[0] == '~' or \
@@ -901,7 +920,7 @@ class Parser:
 
         if token[0] == '*' or token[0] == '/':
             while token[0] == '*' or token[0] == '/':
-
+                operation = token[0]
                 token = self.Tokens.get_next_token()
 
                 if token[0] == '*' or token[0] == '/':
@@ -921,6 +940,11 @@ class Parser:
                     self.error(token, "factor expected")
 
                 token = self.Tokens.peek_next_token()
+
+        if operation == '*':
+            self.write_call('Math.multiply', '2')
+        elif operation == '/':
+            self.write_call('Math.divide', '2')
 
     def factor(self):
         token = self.Tokens.peek_next_token()
@@ -952,14 +976,26 @@ class Parser:
 
             if token[2] == 'identifier' and token[3] != 'Object':
                 if not self.table.init_check(token, self.currentMethod, self.currentClass):
-                    self.error(token, "variable has not been initialised")
+                    if not self.table.exists(token[0]):
+                        self.error(token, "variable has not been initialised or declared")
+
+            if token[2] == 'integerConstant':
+                self.write_push('constant', token[0])
 
         else:
             self.error(token, "integerConstant or Identifier or stringLiteral or 'true' or 'false' or 'null' or "
                               "'this' expected")
 
         if token[2] == 'identifier':
+
+            temp = token
+            methods = None
+
             token = self.Tokens.peek_next_token()
+            if token[0] == ')':
+                x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
+                self.write_push(x, y)
+
             if token[0] == '[':
                 token = self.Tokens.get_next_token()
                 self.ok(token)
@@ -999,6 +1035,7 @@ class Parser:
 
                 if token[0] == ')':
                     self.ok(token)
+                    self.write_call(temp[0], self.table.argument_count(temp[0], self.currentClass))
                 else:
                     self.error(token, ") expected")
 
@@ -1012,6 +1049,7 @@ class Parser:
 
                 if token[2] == 'identifier':
                     self.ok(token)
+                    methods = token[0]
                 else:
                     self.error(token, "identifier expected")
 
@@ -1056,8 +1094,12 @@ class Parser:
 
                     if token[0] == ')':
                         self.ok(token)
+                        self.write_call(temp[0] + '.' + methods, self.table.argument_count(methods, temp[0]))
                     else:
                         self.error(token, ") expected")
+            elif not self.table.exists(temp[0]):
+                x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
+                self.write_push(x, y)
 
         if token[0] == '(':
             self.Tokens.peek_next_token()
@@ -1076,3 +1118,49 @@ class Parser:
                 self.ok(token)
             else:
                 self.error(token, ") expected")
+
+    # Methods for writing specific commands to the file
+    def write_pop(self, location, value):
+        if location == 'var':
+            location = 'local'
+        elif location == 'field':
+            location = 'this'
+
+        if self.std_check:
+            self.file.write("pop " + location + " " + value + "\n")
+
+    def write_push(self, location, value):
+        if location == 'var':
+            location = 'local'
+        elif location == 'field':
+            location = 'this'
+
+        if self.std_check:
+            self.file.write("push " + location + " " + value + "\n")
+
+    def write_label(self, label):
+        if self.std_check:
+            self.file.write("label " + label + "\n")
+
+    def write_bool(self, command):
+        if self.std_check:
+            self.file.write(command + "\n")
+
+    def write_goto(self, location):
+        if self.std_check:
+            self.file.write("goto " + location + "\n")
+
+    def write_if_goto(self, location):
+        if self.std_check:
+            self.file.write("if-goto " + location + "\n")
+
+    def write_function(self, name, variables):
+        if self.std_check:
+            self.file.write("function " + name + " " + variables + "\n")
+
+    def write_call(self, name, variables):
+        if self.std_check:
+            self.file.write("call " + name + " " + variables + "\n")
+
+    def write_return(self):
+        self.file.write("return\n")

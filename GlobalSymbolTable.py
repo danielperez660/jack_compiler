@@ -5,23 +5,10 @@ from compiler import ClassSymbolTable as cT
 class GlobalSymbolTable:
 
     def __init__(self):
-        self.class_scope_table = []
-        self.method_scope_tables = [[['this', None, 'reference'], 0]]
 
         # All the symbol tables for methods and functions
         self.method_tables = []
         self.class_tables = []
-
-        self.current_method = 0
-        self.current_table = None
-
-        # counters for the class_scope_table
-        self.static_counter = 0
-        self.field_counter = 0
-
-        # counters for the method_scope_tables
-        self.var_counter = 0
-        self.argument_counter = 1
 
     # Generates new symbol table for either class or method
     def new_table_gen(self, name, meth_class, types):
@@ -38,6 +25,8 @@ class GlobalSymbolTable:
     # Adds symbol to a specific table
     def add_symbol_to(self, symbol, table, symb_type):
 
+        # TODO - Fix issue where multiple functions can have same name in different classes
+
         # Checks if the value is added to a method or class table
         for i in self.method_tables:
             if i.get_name() == table:
@@ -49,8 +38,6 @@ class GlobalSymbolTable:
 
     # Set symbol as initialised
     def initialise(self, symbol, curr_method, curr_class):
-
-        print(curr_method + curr_class)
 
         for i in self.class_tables:
             if i.get_name() == curr_class:
@@ -103,10 +90,41 @@ class GlobalSymbolTable:
             # debugging purpose
             self.error(symbol, " identifier expected. Does not belong in symbolTable")
 
-    @staticmethod
-    def error(token, message):
-        print("error in line", token[1], "at or near " + token[0] + ", " + message)
-        exit(0)
+    # Checks to see what the ID is of a specific element and returns it
+    def find_symbol_id(self, symbol, class_table, method_table):
+
+        for i in self.class_tables:
+            if i.get_name() == class_table:
+                for j in i.get_table():
+                    if j[0] == symbol[0]:
+                        print(j[2], j[3])
+                        return j[2], str(j[3])
+
+        for i in self.method_tables:
+            if i.get_name() == method_table:
+                for j in i.get_table():
+                    if j[0] == symbol[0]:
+                        return j[2], str(j[3])
+
+    # counts the required arguments for a method call
+    def argument_count(self, method_table, called_class):
+        counter = -1
+
+        print(method_table, called_class)
+
+        for i in self.method_tables:
+            if i.get_name() == method_table and i.get_table()[0][1] == called_class:
+                for j in i.get_table():
+                    print(j)
+                    counter += 1
+
+        return str(counter)
+
+    def exists(self, name):
+        for i in self.method_tables:
+            if name == i.get_name():
+                return True
+        return False
 
     # debugging purpose
     def print(self):
@@ -118,3 +136,8 @@ class GlobalSymbolTable:
         print("\nMethod Scope Table")
         for i in self.method_tables:
             i.print()
+
+    @staticmethod
+    def error(token, message):
+        print("error in line", token[1], "at or near " + token[0] + ", " + message)
+        exit(0)
