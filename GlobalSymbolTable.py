@@ -23,13 +23,13 @@ class GlobalSymbolTable:
             self.class_tables.append(current)
 
     # Adds symbol to a specific table
-    def add_symbol_to(self, symbol, table, symb_type):
-
-        # TODO - Fix issue where multiple functions can have same name in different classes
+    def add_symbol_to(self, symbol, table, symb_type, parent_class):
 
         # Checks if the value is added to a method or class table
         for i in self.method_tables:
-            if i.get_name() == table:
+            # Ensures that if 2 tables have same name in diff classes, it still works
+            tab = i.get_table()
+            if i.get_name() == table and tab[0][1] == parent_class:
                 i.add(symbol, symb_type)
 
         for i in self.class_tables:
@@ -109,9 +109,6 @@ class GlobalSymbolTable:
     # counts the required arguments for a method call
     def argument_count(self, method_table, called_class):
         counter = -1
-
-        print(method_table, called_class)
-
         for i in self.method_tables:
             if i.get_name() == method_table and i.get_table()[0][1] == called_class:
                 for j in i.get_table():

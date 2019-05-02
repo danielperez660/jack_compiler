@@ -6,6 +6,7 @@ class Parser:
 
     def __init__(self, file):
         print("PARSER INITIALISED")
+        self.while_counter = 0
         self.std_check = False
         self.file = open("compiled.txt", "w")
 
@@ -76,6 +77,7 @@ class Parser:
 
         if token[0] == '}':
             self.ok(token)
+            self.write_return()
         else:
             self.error(token, "'}' expected")
 
@@ -115,7 +117,7 @@ class Parser:
             self.ok(token)
 
             if self.table.find_symbol(token, 'class', self.currentClass):
-                self.table.add_symbol_to(token, self.currentClass, types)
+                self.table.add_symbol_to(token, self.currentClass, types, self.currentClass)
             else:
                 self.error(token, "redeclaration of identifier")
         else:
@@ -229,7 +231,7 @@ class Parser:
 
             self.ok(token)
             if self.table.find_symbol(token, 'method', self.currentMethod):
-                self.table.add_symbol_to(token, self.currentMethod, 'argument')
+                self.table.add_symbol_to(token, self.currentMethod, 'argument', self.currentClass)
             else:
                 self.error(token, "redeclaration of identifier")
         else:
@@ -259,12 +261,11 @@ class Parser:
                     self.ok(token)
 
                     if self.table.find_symbol(token, 'method', self.currentMethod):
-                        self.table.add_symbol_to(token, self.currentMethod, 'argument')
+                        self.table.add_symbol_to(token, self.currentMethod, 'argument', self.currentClass)
                     else:
                         self.error(token, "redeclaration of identifier")
                 else:
                     self.error(token, "identifier expected")
-
 
     def subroutineBody(self):
 
@@ -343,7 +344,7 @@ class Parser:
         if token[2] == 'identifier':
 
             if self.table.find_symbol(token, 'method', self.currentMethod):
-                self.table.add_symbol_to(token, self.currentMethod, 'var')
+                self.table.add_symbol_to(token, self.currentMethod, 'var', self.currentClass)
             else:
 
                 self.error(token, "redeclaration of identifier")
@@ -369,7 +370,7 @@ class Parser:
                     self.ok(token)
 
                     if self.table.find_symbol(token, 'method', self.currentMethod):
-                        self.table.add_symbol_to(token, self.currentMethod, 'var')
+                        self.table.add_symbol_to(token, self.currentMethod, 'var', self.currentClass)
                     else:
                         self.error(token, "redeclaration of identifier")
 
@@ -581,6 +582,7 @@ class Parser:
 
         if token[0] == 'while':
             self.ok(token)
+            self.write_label('WHILE' + str(self.while_counter))
         else:
             self.error(token, "'while' expected")
 
@@ -606,6 +608,8 @@ class Parser:
 
         if token[0] == ')':
             self.ok(token)
+            self.write_bool('not')
+            self.write_if_goto('WHILE_END' + str(self.while_counter))
         else:
             self.error(token, "')' expected")
 
@@ -639,6 +643,9 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if token[0] == '}':
+            self.write_goto('WHILE' + str(self.while_counter))
+            self.write_label('WHILE_END' + str(self.while_counter))
+            self.while_counter += 1
             self.ok(token)
         else:
             self.error(token, "'}' expected")
@@ -663,7 +670,8 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if self.token_assigning is not None:
-            self.write_call(temp[0] + '.' + self.token_assigning, self.table.argument_count(self.token_assigning, temp[0]))
+            self.write_call(temp[0] + '.' + self.token_assigning,
+                            self.table.argument_count(self.token_assigning, temp[0]))
         else:
             self.write_call(temp[0], self.table.argument_count(token[0], self.currentClass))
 
@@ -838,7 +846,7 @@ class Parser:
 
         if token[0] == '=' or token[0] == '<' or token[0] == '>':
             while token[0] == '=' or token[0] == '<' or token[0] == '>':
-
+                temp = token
                 token = self.Tokens.get_next_token()
 
                 if token[0] == '=' or token[0] == '<' or token[0] == '>':
@@ -858,6 +866,12 @@ class Parser:
                     self.error(token, "arithmeticExpression expected")
 
                 token = self.Tokens.peek_next_token()
+                if temp[0] == '<':
+                    self.write_bool('lt')
+                elif temp[0] == '>':
+                    self.write_bool('mt')
+                elif temp[0] == '=':
+                    self.write_bool('eq')
 
     def arithmeticExpression(self):
         operation = None
@@ -981,6 +995,8 @@ class Parser:
 
             if token[2] == 'integerConstant':
                 self.write_push('constant', token[0])
+            elif token[2] == 'stringLiteral':
+                self.write_strings(token[0])
 
         else:
             self.error(token, "integerConstant or Identifier or stringLiteral or 'true' or 'false' or 'null' or "
@@ -1097,7 +1113,7 @@ class Parser:
                         self.write_call(temp[0] + '.' + methods, self.table.argument_count(methods, temp[0]))
                     else:
                         self.error(token, ") expected")
-            elif not self.table.exists(temp[0]):
+            elif not self.table.exists(temp[0]) and token[0] != ')':
                 x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
                 self.write_push(x, y)
 
@@ -1118,6 +1134,16 @@ class Parser:
                 self.ok(token)
             else:
                 self.error(token, ") expected")
+
+    # Handles string literals
+    def write_strings(self, word):
+
+        self.write_push('constant', str(len(word)))
+        self.write_call('String.new', '1')
+
+        for i in word:
+            self.write_push('constant', str(ord(i)))
+            self.write_call('String.appendChar', '2')
 
     # Methods for writing specific commands to the file
     def write_pop(self, location, value):
