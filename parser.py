@@ -7,6 +7,7 @@ class Parser:
     def __init__(self, file):
         print("PARSER INITIALISED")
         self.while_counter = 0
+        self.array_check = False
         self.std_check = False
         self.file = open("compiled.txt", "w")
 
@@ -23,6 +24,8 @@ class Parser:
             print("\n" + i + "\n")
             self.Tokens = lex.Token(i)
             self.classDeclar()
+
+        # TODO - Fix issue where we have the wrong no of variables when a function is written
 
         self.std_check = True
 
@@ -77,7 +80,6 @@ class Parser:
 
         if token[0] == '}':
             self.ok(token)
-            self.write_return()
         else:
             self.error(token, "'}' expected")
 
@@ -398,7 +400,7 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if token[2] == 'identifier':
-            print(token)
+
             # Checks to see if the identifier has been defined previously
             if self.table.find_symbol(token, 'method', self.currentMethod) and \
                     self.table.find_symbol(token, 'class', self.currentClass) \
@@ -417,6 +419,8 @@ class Parser:
         token = self.Tokens.peek_next_token()
 
         if token[0] == '[':
+            self.array_check = True
+
             token = self.Tokens.get_next_token()
             self.ok(token)
 
@@ -435,6 +439,9 @@ class Parser:
 
             if token[0] == ']':
                 self.ok(token)
+                x, y = self.table.find_symbol_id(self.token_assigning, self.currentClass, self.currentMethod)
+                self.write_push(x, y)
+                self.write_bool('add')
             else:
                 self.error(token, "']' expected")
 
@@ -456,8 +463,15 @@ class Parser:
 
         token = self.Tokens.get_next_token()
 
-        x, y = self.table.find_symbol_id(self.token_assigning, self.currentClass, self.currentMethod)
-        self.write_pop(x, y)
+        if not self.array_check:
+            x, y = self.table.find_symbol_id(self.token_assigning, self.currentClass, self.currentMethod)
+            self.write_pop(x, y)
+        else:
+            self.write_pop('temp', '0')
+            self.write_pop('pointer', '1')
+            self.write_push('temp', '0')
+            self.write_push('that', '0')
+            self.array_check = False
 
         if token[0] == ';':
             self.ok(token)
@@ -672,6 +686,7 @@ class Parser:
         if self.token_assigning is not None:
             self.write_call(temp[0] + '.' + self.token_assigning,
                             self.table.argument_count(self.token_assigning, temp[0]))
+            self.write_pop('temp', '0')
         else:
             self.write_call(temp[0], self.table.argument_count(token[0], self.currentClass))
 
@@ -769,6 +784,7 @@ class Parser:
     def returnStatement(self):
 
         token = self.Tokens.get_next_token()
+        ret_void = True
 
         if token[0] == 'return':
             self.ok(token)
@@ -782,11 +798,17 @@ class Parser:
                 or token[2] == 'stringLiteral' or token[0] == 'true' \
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
                 or token[0] == '(':
+            ret_void = False
             self.expression()
 
         token = self.Tokens.get_next_token()
 
         if token[0] == ';':
+
+            if ret_void:
+                self.write_push('constant', '0')
+
+            self.write_return()
             self.ok(token)
         else:
             self.error(token, "';' expected")
@@ -995,7 +1017,7 @@ class Parser:
 
             if token[2] == 'integerConstant':
                 self.write_push('constant', token[0])
-            elif token[2] == 'stringLiteral':
+            if token[2] == 'stringLiteral':
                 self.write_strings(token[0])
 
         else:
@@ -1008,7 +1030,7 @@ class Parser:
             methods = None
 
             token = self.Tokens.peek_next_token()
-            if token[0] == ')':
+            if token[0] == ')' or token[0] == ']':
                 x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
                 self.write_push(x, y)
 
@@ -1030,6 +1052,11 @@ class Parser:
 
                 if token[0] == ']':
                     self.ok(token)
+                    x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
+                    self.write_push(x, y)
+                    self.write_bool('add')
+                    self.write_pop('pointer', '1')
+                    self.write_pop('that', '0')
                 else:
                     self.error(token, "] expected")
 
@@ -1113,7 +1140,7 @@ class Parser:
                         self.write_call(temp[0] + '.' + methods, self.table.argument_count(methods, temp[0]))
                     else:
                         self.error(token, ") expected")
-            elif not self.table.exists(temp[0]) and token[0] != ')':
+            elif not self.table.exists(temp[0]) and token[0] != ')' and token[0] != ']':
                 x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
                 self.write_push(x, y)
 
@@ -1189,4 +1216,5 @@ class Parser:
             self.file.write("call " + name + " " + variables + "\n")
 
     def write_return(self):
-        self.file.write("return\n")
+        if self.std_check:
+            self.file.write("return\n")
