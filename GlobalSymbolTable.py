@@ -97,22 +97,22 @@ class GlobalSymbolTable:
             if i.get_name() == class_table:
                 for j in i.get_table():
                     if j[0] == symbol[0]:
-                        print(j[2], j[3])
                         return j[2], str(j[3])
 
         for i in self.method_tables:
             if i.get_name() == method_table:
                 for j in i.get_table():
                     if j[0] == symbol[0]:
+                        print(j[2], j[3])
                         return j[2], str(j[3])
 
     # counts the required arguments for a method call
     def argument_count(self, method_table, called_class):
         counter = -1
+
         for i in self.method_tables:
             if i.get_name() == method_table and i.get_table()[0][1] == called_class:
                 for j in i.get_table():
-                    print(j)
                     counter += 1
 
         return str(counter)
@@ -121,6 +121,11 @@ class GlobalSymbolTable:
         for i in self.method_tables:
             if name == i.get_name():
                 return True
+
+        for i in self.class_tables:
+            if name == i.get_name():
+                return True
+
         return False
 
     # debugging purpose

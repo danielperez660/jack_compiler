@@ -10,7 +10,7 @@ class MethodSymbolTable(sT.SymbolTable):
 
         # counters for the method_scope_tables
         self.var_counter = 0
-        self.argument_counter = 1
+        self.argument_counter = 0
 
         self.scope_table = [['this', type, 'reference', 'argument', 0]]
 
