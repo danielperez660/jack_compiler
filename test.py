@@ -9,6 +9,8 @@ from compiler import parser as pars
 
 print("\nLEXER TEST PASSED\n")
 
-compiled = pars.Parser("Main.jack")
+# compiled = pars.Parser("Main_screen.jack")
+# compiled = pars.Parser("Main_seven.jack")
+compiled = pars.Parser("Main_string.jack")
 
 print("\nPARSER TEST PASSED\n")

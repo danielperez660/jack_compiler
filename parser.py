@@ -47,7 +47,8 @@ class Parser:
         self.classDeclar()
 
         self.table.print()
-
+        for i in self.var_counter:
+            print(i)
         self.file.close()
 
     @staticmethod
@@ -712,6 +713,7 @@ class Parser:
             self.error(token, "'do' expected")
 
         token = self.Tokens.peek_next_token()
+
         temp = token
 
         if token[2] == 'identifier':
@@ -756,7 +758,7 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if token[2] == 'identifier':
-            if token[3] != 'Object':
+            if token[3] != 'Object' and token[0] != self.currentClass:
                 x, y = self.table.find_symbol_id(token, self.currentClass, self.currentMethod)
                 self.write_push(x, y)
             self.ok(token)
@@ -1111,11 +1113,6 @@ class Parser:
 
             token = self.Tokens.peek_next_token()
 
-            for i in self.stdLibs:
-                if temp[3] == i.split('.')[0]:
-                    x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
-                    self.write_push(x, y)
-
             if token[0] == '[':
                 token = self.Tokens.get_next_token()
                 self.ok(token)
@@ -1139,9 +1136,9 @@ class Parser:
                     self.write_bool('add')
                     self.write_pop('pointer', '1')
                     self.write_push('that', '0')
-                    return
                 else:
                     self.error(token, "] expected")
+                return
 
             if token[0] == '(':
                 token = self.Tokens.get_next_token()
@@ -1163,7 +1160,6 @@ class Parser:
 
                 if token[0] == ')':
                     self.ok(token)
-
                     if passed[2] == 'identifier':
                         x, y = self.table.find_symbol_id(passed, temp[0], methods)
                         self.write_push(x, y)
@@ -1186,16 +1182,22 @@ class Parser:
                         count += 1
 
                     self.write_call(name + '.' + self.token_assigning, str(count))
-                    return
                 else:
                     self.error(token, ") expected")
+                return
 
             if token[0] == '.':
+
+                if temp[3] != 'Object':
+                    x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
+                    self.write_push(x, y)
+
                 if token[0] == '.':
                     token = self.Tokens.get_next_token()
                     self.ok(token)
                 else:
                     self.error(token, "'.' expected")
+
                 token = self.Tokens.get_next_token()
 
                 if token[2] == 'identifier':
@@ -1252,7 +1254,7 @@ class Parser:
                                 name = temp[3]
 
                         for i in self.var_counter:
-                            if i[0] == self.token_assigning and i[1] == name and i[2] == 'arg':
+                            if i[0] == methods and i[1] == name and i[2] == 'arg':
                                 count += 1
 
                         if count == -1 or self.table.get_sub(methods, name) == 'method':
@@ -1261,17 +1263,13 @@ class Parser:
                             count += 1
 
                         self.write_call(name + '.' + methods, str(count))
-                        return
                     else:
                         self.error(token, ") expected")
-
-            elif not self.table.exists(temp[0]) and token[0] != ')' and token[0] != ']':
+                return
+            else:
                 x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
                 self.write_push(x, y)
                 return
-
-            x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
-            self.write_push(x, y)
 
         if token[0] == '(':
             self.Tokens.peek_next_token()
