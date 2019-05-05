@@ -5,7 +5,7 @@ from compiler import parser as pars
 #
 # for i in lexer.tokens:
 #     print(i)
-
+#
 
 print("\nLEXER TEST PASSED\n")
 

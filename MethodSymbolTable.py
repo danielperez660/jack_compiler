@@ -3,18 +3,22 @@ from compiler import SymbolTable as sT
 
 class MethodSymbolTable(sT.SymbolTable):
 
-    def __init__(self, name, type):
+    def __init__(self, name, type, sub):
         super().__init__(name)
         self.name = name
         self.type = type
+        self.sub_type = sub
 
         # counters for the method_scope_tables
         self.var_counter = 0
         self.argument_counter = 0
 
-        self.scope_table = [['this', type, 'reference', 'argument', 0]]
+        if self.sub_type == 'method':
+            self.scope_table = [['this', type, 'reference', 'argument', 0]]
+        else:
+            self.scope_table = []
 
-    # Adds a new value to the symbol table
+            # Adds a new value to the symbol table
     def add(self, symbol, symb_type):
 
         if symb_type == 'var':
@@ -27,3 +31,9 @@ class MethodSymbolTable(sT.SymbolTable):
         print("Adding: ", end=" ")
         print(symbol, end=" ")
         print("to " + self.name)
+
+    def get_type(self):
+        return self.type
+
+    def get_sub(self):
+        return self.sub_type

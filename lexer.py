@@ -22,7 +22,7 @@ class Token:
         temp = ""
         line = 0
         i = 0
-        separator = ['(', ')', '{', '}', ';', '.', ',', '[', ']']
+        separator = ['(', ')', '{', '}', ';', '.', ',', '[', ']', '~', '-']
 
         # Checks to see if any lexemes are forming
         forming = False

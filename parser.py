@@ -20,7 +20,7 @@ class Parser:
         self.token_assigning = None
 
         self.stdLibs = ["Array.jack", "Keyboard.jack", "Math.jack", "Memory.jack",
-                   "Output.jack", "Screen.jack", "String.jack", "Sys.jack"]
+                        "Output.jack", "Screen.jack", "String.jack", "Sys.jack"]
 
         self.table = sT.GlobalSymbolTable()
         self.currentClass = ""
@@ -73,7 +73,7 @@ class Parser:
             self.ok(token)
 
             # Generates a new table for the class and sets the current one to it
-            self.table.new_table_gen(token[0], 'class', None)
+            self.table.new_table_gen(token[0], 'class', None, None)
             self.currentClass = token[0]
 
             print("Current Class: " + self.currentClass)
@@ -177,6 +177,7 @@ class Parser:
     def subroutineDeclar(self):
 
         token = self.Tokens.get_next_token()
+        sub = token[0]
 
         if token[0] == 'constructor' or token[0] == 'function' or token[0] == 'method':
             self.ok(token)
@@ -198,7 +199,7 @@ class Parser:
         if token[2] == 'identifier':
             self.ok(token)
             self.token_assigning = token
-            self.table.new_table_gen(token[0], 'method', self.currentClass)
+            self.table.new_table_gen(token[0], 'method', self.currentClass, sub)
             self.currentMethod = token[0]
             print("Current method: " + self.currentMethod)
 
@@ -735,7 +736,7 @@ class Parser:
                 if i[0] == self.token_assigning and i[1] == name and i[2] == 'arg':
                     count += 1
 
-            if count == -1:
+            if count == -1 or self.table.get_sub(self.token_assigning, name) == 'method':
                 count = self.table.argument_count(self.token_assigning, name)
             else:
                 count += 1
@@ -755,6 +756,9 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if token[2] == 'identifier':
+            if token[3] != 'Object':
+                x, y = self.table.find_symbol_id(token, self.currentClass, self.currentMethod)
+                self.write_push(x, y)
             self.ok(token)
         else:
             self.error(token, "'identifier' expected")
@@ -771,8 +775,7 @@ class Parser:
             token = self.Tokens.get_next_token()
 
             if token[2] == 'identifier':
-                methods = token[0]
-                self.token_assigning = methods
+                self.token_assigning = token[0]
                 self.ok(token)
             else:
                 self.error(token, "identifier expected")
@@ -786,7 +789,7 @@ class Parser:
 
         token = self.Tokens.peek_next_token()
 
-        if token[0] == '-' or token[0] == '~' or token[0] == '-' or \
+        if token[0] == '-' or token[0] == '~' or \
                 token[2] == 'integerConstant' or token[2] == 'identifier' \
                 or token[2] == 'stringLiteral' or token[0] == 'true' \
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
@@ -794,6 +797,7 @@ class Parser:
             self.expressionList()
 
         token = self.Tokens.get_next_token()
+
         if token[0] == ')':
             self.ok(token)
         else:
@@ -803,14 +807,15 @@ class Parser:
 
         token = self.Tokens.peek_next_token()
 
+        if token[0] == ')':
+            return
+
         if token[0] == '-' or token[0] == '~' or token[0] == '-' or \
                 token[2] == 'integerConstant' or token[2] == 'identifier' \
                 or token[2] == 'stringLiteral' or token[0] == 'true' \
                 or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
                 or token[0] == '(':
             self.expression()
-        else:
-            return
 
         token = self.Tokens.peek_next_token()
 
@@ -904,7 +909,8 @@ class Parser:
                         or token[0] == '(':
                     self.relationalExpression()
                 else:
-                    self.error(token, "expression expected")
+
+                    self.error(token, "relational expression expected")
 
                 token = self.Tokens.peek_next_token()
                 if temp[0] == '&':
@@ -1063,7 +1069,7 @@ class Parser:
 
         if temp[0] == '~':
             self.write_bool('not')
-        elif temp[0][0] == '-':
+        elif temp[0] == '-':
             self.write_bool('neg')
 
     def operand(self):
@@ -1083,10 +1089,7 @@ class Parser:
                         self.error(token, "variable has not been initialised or declared")
 
             if token[2] == 'integerConstant':
-                if token[0][0] == '-':
-                    self.write_push('constant', token[0][1:])
-                else:
-                    self.write_push('constant', token[0])
+                self.write_push('constant', token[0])
             if token[0] == 'true':
                 self.write_push('constant', '0')
                 self.write_bool('not')
@@ -1107,6 +1110,11 @@ class Parser:
             methods = None
 
             token = self.Tokens.peek_next_token()
+
+            for i in self.stdLibs:
+                if temp[3] == i.split('.')[0]:
+                    x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
+                    self.write_push(x, y)
 
             if token[0] == '[':
                 token = self.Tokens.get_next_token()
@@ -1144,7 +1152,7 @@ class Parser:
                 if token[2] == 'integerConstant' or token[2] == 'identifier' \
                         or token[2] == 'stringLiteral' or token[0] == 'true' \
                         or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                        or token[0] == '(':
+                        or token[0] == '(' or token[0] == '-' or token[0] == '~':
                     self.expressionList()
                 else:
                     self.error(token, "expressionList expected")
@@ -1154,21 +1162,30 @@ class Parser:
                 token = self.Tokens.get_next_token()
 
                 if token[0] == ')':
-
-                    count = self.table.argument_count(methods, temp[0])
                     self.ok(token)
 
                     if passed[2] == 'identifier':
                         x, y = self.table.find_symbol_id(passed, temp[0], methods)
                         self.write_push(x, y)
 
-                    if count == '-1':
-                        count = 0
-                        for i in self.var_counter:
-                            if i[0] == methods and i[1] == temp[0]:
-                                count += 1
-                                print(i)
-                    self.write_call(temp[0] + '.' + methods, str(count))
+                    count = -1
+                    name = temp[0]
+
+                    for i in self.stdLibs:
+                        if temp[3] == i.split('.')[0]:
+                            name = temp[3]
+                            print("Name change: " + name)
+
+                    for i in self.var_counter:
+                        if i[0] == self.token_assigning and i[1] == name and i[2] == 'arg':
+                            count += 1
+
+                    if count == -1 or self.table.get_sub(self.token_assigning, name) == 'method':
+                        count = self.table.argument_count(self.token_assigning, name)
+                    else:
+                        count += 1
+
+                    self.write_call(name + '.' + self.token_assigning, str(count))
                     return
                 else:
                     self.error(token, ") expected")
@@ -1219,31 +1236,31 @@ class Parser:
                     if token[2] == 'integerConstant' or token[2] == 'identifier' \
                             or token[2] == 'stringLiteral' or token[0] == 'true' \
                             or token[0] == 'false' or token[0] == 'null' or token[0] == 'this' \
-                            or token[0] == '(':
+                            or token[0] == '(' or token[0] == '-' or token[0] == '~':
                         self.expressionList()
-                    else:
-                        self.error(token, "expressionList expected")
-
-                    # passed = token
 
                     token = self.Tokens.get_next_token()
 
                     if token[0] == ')':
 
-                        count = self.table.argument_count(methods, temp[0])
+                        count = -1
                         self.ok(token)
+                        name = temp[0]
 
-                        # if passed[2] == 'identifier':
-                        #     x, y = self.table.find_symbol_id(passed, temp[0], methods)
-                        #     self.write_push(x, y)
+                        for i in self.stdLibs:
+                            if i.split('.')[0] == temp[3]:
+                                name = temp[3]
 
-                        if count == '-1':
-                            count = 0
-                            for i in self.var_counter:
-                                if i[0] == methods and i[1] == temp[0]:
-                                    count += 1
-                                    print(i)
-                        self.write_call(temp[0] + '.' + methods, str(count))
+                        for i in self.var_counter:
+                            if i[0] == self.token_assigning and i[1] == name and i[2] == 'arg':
+                                count += 1
+
+                        if count == -1 or self.table.get_sub(methods, name) == 'method':
+                            count = self.table.argument_count(methods, name)
+                        else:
+                            count += 1
+
+                        self.write_call(name + '.' + methods, str(count))
                         return
                     else:
                         self.error(token, ") expected")

@@ -11,11 +11,11 @@ class GlobalSymbolTable:
         self.class_tables = []
 
     # Generates new symbol table for either class or method
-    def new_table_gen(self, name, meth_class, types):
+    def new_table_gen(self, name, meth_class, types, sub):
 
         if meth_class == 'method':
             print("Created method: " + name + " " + types)
-            current = mT.MethodSymbolTable(name, types)
+            current = mT.MethodSymbolTable(name, types, sub)
             self.method_tables.append(current)
         else:
             print("Created class: " + name)
@@ -28,8 +28,7 @@ class GlobalSymbolTable:
         # Checks if the value is added to a method or class table
         for i in self.method_tables:
             # Ensures that if 2 tables have same name in diff classes, it still works
-            tab = i.get_table()
-            if i.get_name() == table and tab[0][1] == parent_class:
+            if i.get_name() == table and i.get_type() == parent_class:
                 i.add(symbol, symb_type)
 
         for i in self.class_tables:
@@ -95,7 +94,8 @@ class GlobalSymbolTable:
 
         for i in self.class_tables:
             if i.get_name() == class_table:
-                for j in i.get_table():
+                tab = i.get_table()
+                for j in tab:
                     if j[0] == symbol[0]:
                         return j[2], str(j[3])
 
@@ -103,22 +103,24 @@ class GlobalSymbolTable:
             if i.get_name() == method_table:
                 for j in i.get_table():
                     if j[0] == symbol[0]:
-                        print(j[2], j[3])
                         return j[2], str(j[3])
 
     # counts the required arguments for a method call
     def argument_count(self, method_table, called_class):
         counter = -1
-
         for i in self.method_tables:
-            if i.get_name() == method_table and i.get_table()[0][1] == called_class:
+            if i.get_name() == method_table and i.get_type() == called_class:
+                counter = 0
                 for j in i.get_table():
-                    counter = 0
-                    if j[2] == 'argument':
-                        print(j[0])
+                    if j[2] == 'argument' or j[2] == 'reference':
                         counter += 1
 
         return str(counter)
+
+    def get_sub(self, method, class_name):
+        for i in self.method_tables:
+            if i.get_name() == method and i.get_type() == class_name:
+                return i.get_sub()
 
     def exists(self, name):
         for i in self.method_tables:
