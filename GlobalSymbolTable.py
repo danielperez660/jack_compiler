@@ -113,7 +113,10 @@ class GlobalSymbolTable:
         for i in self.method_tables:
             if i.get_name() == method_table and i.get_table()[0][1] == called_class:
                 for j in i.get_table():
-                    counter += 1
+                    counter = 0
+                    if j[2] == 'argument':
+                        print(j[0])
+                        counter += 1
 
         return str(counter)
 

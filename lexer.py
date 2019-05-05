@@ -179,7 +179,7 @@ class Token:
                 # Sets the initial value of the identifier as not initialised
                 tokens.append([i[0], i[1], "identifier", type_of, False])
 
-            elif i[0].isnumeric():
+            elif i[0].isnumeric() or i[0][0] == '-':
                 tokens.append([i[0], i[1], "integerConstant"])
 
         return tokens

@@ -6,19 +6,20 @@ class Parser:
 
     def __init__(self, file):
         print("PARSER INITIALISED")
-        self.while_counter = 0
-        self.if_counter = 0
+        self.while_counter = -1
+        self.if_counter = -1
 
         self.array_check = False
         self.std_check = False
 
-        self.file = open("compiled.txt", "w")
+        div = file.split('.')
+        self.file = open(div[0] + '.vm', "w")
 
         self.var_counter = []
 
         self.token_assigning = None
 
-        stdLibs = ["Array.jack", "Keyboard.jack", "Math.jack", "Memory.jack",
+        self.stdLibs = ["Array.jack", "Keyboard.jack", "Math.jack", "Memory.jack",
                    "Output.jack", "Screen.jack", "String.jack", "Sys.jack"]
 
         self.table = sT.GlobalSymbolTable()
@@ -31,13 +32,13 @@ class Parser:
 
         self.table = sT.GlobalSymbolTable()
 
-        for i in stdLibs:
+        for i in self.stdLibs:
             print("\n" + i + "\n")
             self.Tokens = lex.Token(i)
             self.classDeclar()
 
-        self.while_counter = 0
-        self.if_counter = 0
+        self.while_counter = -1
+        self.if_counter = -1
 
         self.array_check = False
         self.std_check = True
@@ -46,6 +47,7 @@ class Parser:
         self.classDeclar()
 
         self.table.print()
+
         self.file.close()
 
     @staticmethod
@@ -532,9 +534,11 @@ class Parser:
 
         if token[0] == ')':
             self.ok(token)
+            self.if_counter += 1
             self.write_if_goto('IF_TRUE' + str(self.if_counter))
             self.write_goto('IF_FALSE' + str(self.if_counter))
             self.write_label('IF_TRUE' + str(self.if_counter))
+
         else:
             self.error(token, "')' expected")
 
@@ -569,8 +573,6 @@ class Parser:
 
         if token[0] == '}':
             self.ok(token)
-            self.write_label('IF_FALSE' + str(self.if_counter))
-            self.if_counter += 1
         else:
             self.error(token, "'}' expected")
 
@@ -582,6 +584,8 @@ class Parser:
 
             if token[0] == 'else':
                 self.ok(token)
+                self.write_goto('IF_END' + str(self.if_counter))
+                self.write_label('IF_FALSE' + str(self.if_counter))
 
             token = self.Tokens.get_next_token()
 
@@ -614,8 +618,13 @@ class Parser:
 
             if token[0] == '}':
                 self.ok(token)
+                self.write_label('IF_END' + str(self.if_counter))
+                self.if_counter -= 1
             else:
                 self.error(token, "'}' expected")
+        else:
+            self.write_label('IF_FALSE' + str(self.if_counter))
+            self.if_counter -= 1
 
     def whileStatement(self):
 
@@ -623,7 +632,8 @@ class Parser:
 
         if token[0] == 'while':
             self.ok(token)
-            self.write_label('WHILE' + str(self.while_counter))
+            self.while_counter += 1
+            self.write_label('WHILE_EXP' + str(self.while_counter))
         else:
             self.error(token, "'while' expected")
 
@@ -684,9 +694,9 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if token[0] == '}':
-            self.write_goto('WHILE' + str(self.while_counter))
+            self.write_goto('WHILE_EXP' + str(self.while_counter))
             self.write_label('WHILE_END' + str(self.while_counter))
-            self.while_counter += 1
+            self.while_counter -= 1
             self.ok(token)
         else:
             self.error(token, "'}' expected")
@@ -710,22 +720,30 @@ class Parser:
 
         token = self.Tokens.get_next_token()
 
+        name = temp[0]
+
         if self.token_assigning is not None:
             self.ok(token)
+            count = -1
 
-            count = self.table.argument_count(self.token_assigning, temp[0])
-            if count == '-1':
-                count = 0
-                for i in self.var_counter:
-                    if i[0] == self.token_assigning and i[1] == temp[0]:
-                        count += 1
-                        print(i)
+            for i in self.stdLibs:
+                if temp[3] == i.split('.')[0]:
+                    name = temp[3]
+                    print("Name change: " + name)
 
-            self.write_call(temp[0] + '.' + self.token_assigning, str(count))
+            for i in self.var_counter:
+                if i[0] == self.token_assigning and i[1] == name and i[2] == 'arg':
+                    count += 1
+
+            if count == -1:
+                count = self.table.argument_count(self.token_assigning, name)
+            else:
+                count += 1
+
+            self.write_call(name + '.' + self.token_assigning, str(count))
             self.write_pop('temp', '0')
-
         else:
-            self.write_call(temp[0], self.table.argument_count(token[0], self.currentClass))
+            self.write_call(name, self.table.argument_count(token[0], self.currentClass))
 
         if token[0] == ';':
             self.ok(token)
@@ -868,6 +886,8 @@ class Parser:
         if token[0] == '&' or token[0] == '|':
             while token[0] == '&' or token[0] == '|':
 
+                temp = token
+
                 token = self.Tokens.get_next_token()
 
                 if token[0] == '&' or token[0] == '|':
@@ -887,6 +907,10 @@ class Parser:
                     self.error(token, "expression expected")
 
                 token = self.Tokens.peek_next_token()
+                if temp[0] == '&':
+                    self.write_bool('and')
+                elif temp[0] == '|':
+                    self.write_bool('or')
 
     def relationalExpression(self):
 
@@ -1021,6 +1045,7 @@ class Parser:
 
     def factor(self):
         token = self.Tokens.peek_next_token()
+        temp = token
 
         if token[0] == '-' or token[0] == '~':
             token = self.Tokens.get_next_token()
@@ -1035,6 +1060,11 @@ class Parser:
             self.operand()
         else:
             self.error(token, "operand expected")
+
+        if temp[0] == '~':
+            self.write_bool('not')
+        elif temp[0][0] == '-':
+            self.write_bool('neg')
 
     def operand(self):
 
@@ -1053,7 +1083,15 @@ class Parser:
                         self.error(token, "variable has not been initialised or declared")
 
             if token[2] == 'integerConstant':
-                self.write_push('constant', token[0])
+                if token[0][0] == '-':
+                    self.write_push('constant', token[0][1:])
+                else:
+                    self.write_push('constant', token[0])
+            if token[0] == 'true':
+                self.write_push('constant', '0')
+                self.write_bool('not')
+            if token[0] == 'false':
+                self.write_push('constant', '0')
             if token[2] == 'stringLiteral':
                 self.write_strings(token[0])
             if token[0] == 'null':
@@ -1186,7 +1224,7 @@ class Parser:
                     else:
                         self.error(token, "expressionList expected")
 
-                    passed = token
+                    # passed = token
 
                     token = self.Tokens.get_next_token()
 
