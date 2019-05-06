@@ -11,11 +11,12 @@ class MethodSymbolTable(sT.SymbolTable):
 
         # counters for the method_scope_tables
         self.var_counter = 0
-        self.argument_counter = 0
 
         if self.sub_type == 'method':
+            self.argument_counter = 1
             self.scope_table = [['this', type, 'reference', 'argument', 0]]
         else:
+            self.argument_counter = 0
             self.scope_table = []
 
             # Adds a new value to the symbol table

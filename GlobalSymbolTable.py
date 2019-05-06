@@ -89,7 +89,7 @@ class GlobalSymbolTable:
             # debugging purpose
             self.error(symbol, " identifier expected. Does not belong in symbolTable")
 
-    # Checks to see what the ID is of a specific element and returns it
+    # Checks to see what the ID is of a specific element and returns it + its location
     def find_symbol_id(self, symbol, class_table, method_table):
 
         for i in self.class_tables:
@@ -108,6 +108,7 @@ class GlobalSymbolTable:
     # counts the required arguments for a method call
     def argument_count(self, method_table, called_class):
         counter = -1
+
         for i in self.method_tables:
             if i.get_name() == method_table and i.get_type() == called_class:
                 counter = 0
@@ -117,11 +118,53 @@ class GlobalSymbolTable:
 
         return str(counter)
 
+    #  Gets the type of a specific token or argument, returns none if not found
+    def get_type(self, name, table, class_table):
+
+        for i in self.method_tables:
+            if i.get_name() == table:
+                tab = i.get_table()
+                for j in tab:
+                    if j[0] == name:
+                        return j[1]
+
+        for i in self.class_tables:
+            if i.get_name() == class_table:
+                tab = i.get_table()
+                for j in tab:
+                    if j[0] == name:
+                        return j[1]
+        return None
+
+    # Counts the class variables in a class
+    def class_count(self, name):
+        counter = 0
+
+        for i in self.class_tables:
+            if i.get_name() == name:
+                tab = i.get_table()
+                for j in tab:
+                    counter += 1
+
+        return str(counter)
+
+    # checks to see the type of a specific token
+    def type_of(self, name, method):
+
+        for i in self.method_tables:
+            if i.get_name() == method:
+                tab = i.get_table()
+                for j in tab:
+                    if j[0] == name:
+                        return j[1]
+
+    # gets the type of a specific table to see if its a method, constructor or function
     def get_sub(self, method, class_name):
         for i in self.method_tables:
             if i.get_name() == method and i.get_type() == class_name:
                 return i.get_sub()
 
+    # Checks to see if a method exists or a class exists, returns true if so
     def exists(self, name):
         for i in self.method_tables:
             if name == i.get_name():
