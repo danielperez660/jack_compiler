@@ -1,4 +1,4 @@
-from compiler import SymbolTable as sT
+import SymbolTable as sT
 
 
 class ClassSymbolTable(sT.SymbolTable):

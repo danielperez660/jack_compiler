@@ -1,5 +1,5 @@
-from compiler import MethodSymbolTable as mT
-from compiler import ClassSymbolTable as cT
+import MethodSymbolTable as mT
+import ClassSymbolTable as cT
 
 
 class GlobalSymbolTable:
@@ -177,15 +177,15 @@ class GlobalSymbolTable:
         return False
 
     # debugging purpose
-    def print(self):
+    def print_(self):
 
         print("\nClass Scope Table")
         for i in self.class_tables:
-            i.print()
+            i.print_()
 
         print("\nMethod Scope Table")
         for i in self.method_tables:
-            i.print()
+            i.print_()
 
     @staticmethod
     def error(token, message):

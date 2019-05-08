@@ -1,5 +1,5 @@
-from compiler import lexer as lex
-from compiler import GlobalSymbolTable as sT
+import lexer as lex
+import GlobalSymbolTable as sT
 
 
 class Parser:
@@ -59,9 +59,7 @@ class Parser:
 
             self.classDeclar()
 
-        self.table.print()
-        # for i in self.var_counter:
-        #     print(i)
+        self.table.print_()
         self.file.close()
 
     @staticmethod
@@ -827,10 +825,6 @@ class Parser:
             if count == -1:
                 count = self.table.argument_count(self.token_assigning, name)
 
-            if temp[3] != 'Object':
-                x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
-                self.write_push(x, y)
-
             self.write_call(name + '.' + self.token_assigning, str(count))
             self.write_pop('temp', '0')
         else:
@@ -862,16 +856,16 @@ class Parser:
     def subroutineCall(self):
 
         token = self.Tokens.get_next_token()
-
-        if token[2] == 'identifier':
-            if token[3] != 'Object' and token[0] != self.currentClass and self.table.exists(token[0]):
-                x, y = self.table.find_symbol_id(token, self.currentClass, self.currentMethod)
-                self.write_push(x, y)
-            self.ok(token)
-        else:
-            self.error(token, "'identifier' expected")
-
+        temp = token
         token = self.Tokens.peek_next_token()
+
+        if temp[2] == 'identifier':
+            if temp[3] != 'Object' and temp[0] != self.currentClass and token[0] == '.':
+                x, y = self.table.find_symbol_id(temp, self.currentClass, self.currentMethod)
+                self.write_push(x, y)
+            self.ok(temp)
+        else:
+            self.error(temp, "'identifier' expected")
 
         if token[0] == '.':
 
@@ -1309,8 +1303,8 @@ class Parser:
                 token = self.Tokens.get_next_token()
 
                 if token[2] == 'identifier':
-
-                    if temp[0] != self.currentClass and not self.table.exists(temp[0]):
+                    print(temp, self.currentClass)
+                    if temp[0] != self.currentClass and not self.table.exists(temp[0]) and temp[0]+'.jack' not in self.stdLibs:
                         x, y = self.table.find_symbol_id(temp, temp[0], self.currentMethod)
                         self.write_push(x, y)
 

@@ -11,7 +11,7 @@ class SymbolTable:
     def get_table(self):
         return self.scope_table
 
-    def print(self):
+    def print_(self):
         print(self.name)
         for i in self.scope_table:
             print(i)
