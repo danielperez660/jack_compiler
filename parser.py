@@ -71,6 +71,10 @@ class Parser:
         print("error in line", token[1], "at or near " + token[0] + ", " + message)
         exit(0)
 
+    @staticmethod
+    def warning(token, message):
+        print("warning in line", token[1], "at or near " + token[0]+ ", " + message)
+
     def classDeclar(self):
         token = self.Tokens.get_next_token()
 
@@ -228,6 +232,8 @@ class Parser:
             self.token_assigning = token
             self.table.new_table_gen(token[0], 'method', self.currentClass, sub)
             self.currentMethod = token[0]
+            self.if_counter = -1
+            self.while_counter = -1
             print("Current method: " + self.currentMethod)
 
             if sub == 'method' and not self.std_check:
@@ -506,7 +512,7 @@ class Parser:
             if self.table.find_symbol(token, 'method', self.currentMethod) and \
                     self.table.find_symbol(token, 'class', self.currentClass) \
                     and token[3] != 'Object':
-                self.error(token, "variable used has not been declared")
+                self.warning(token, "variable used has not been declared")
 
             elif token[3] != 'Object':
                 print("Initialising: " + token[0])
@@ -696,12 +702,10 @@ class Parser:
             if token[0] == '}':
                 self.ok(token)
                 self.write_label('IF_END' + str(self.if_counter))
-                self.if_counter -= 1
             else:
                 self.error(token, "'}' expected")
         else:
             self.write_label('IF_FALSE' + str(self.if_counter))
-            self.if_counter -= 1
 
     def whileStatement(self):
 
@@ -773,7 +777,6 @@ class Parser:
         if token[0] == '}':
             self.write_goto('WHILE_EXP' + str(self.while_counter))
             self.write_label('WHILE_END' + str(self.while_counter))
-            self.while_counter -= 1
             self.ok(token)
         else:
             self.error(token, "'}' expected")
@@ -1188,7 +1191,14 @@ class Parser:
             if token[2] == 'identifier' and token[3] != 'Object':
                 if not self.table.init_check(token, self.currentMethod, self.currentClass):
                     if not self.table.exists(token[0]):
-                        self.error(token, "variable has not been initialised or declared")
+                        self.warning(token, "variable has not been initialised")
+
+            #
+            # # Checks to see if the identifier has been defined previously
+            # if self.table.find_symbol(token, 'method', self.currentMethod) and \
+            #         self.table.find_symbol(token, 'class', self.currentClass) \
+            #         and token[3] != 'Object':
+            #     self.error(token, "variable used has not been declared")
 
             if token[0] == 'this':
                 self.write_push('pointer', '0')
