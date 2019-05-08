@@ -12,6 +12,8 @@ class Parser:
         # Initial pass to parse the std libs
         self.while_counter = -1
         self.if_counter = -1
+        self.nested_while = []
+        self.nested_if = []
 
         self.array_check = False
         self.std_check = False
@@ -48,6 +50,8 @@ class Parser:
         for i in files:
             self.while_counter = -1
             self.if_counter = -1
+            self.nested_while = []
+            self.nested_if = []
 
             self.array_check = False
             self.std_check = True
@@ -618,6 +622,7 @@ class Parser:
         if token[0] == ')':
             self.ok(token)
             self.if_counter += 1
+            self.nested_if.append(self.if_counter)
             self.write_if_goto('IF_TRUE' + str(self.if_counter))
             self.write_goto('IF_FALSE' + str(self.if_counter))
             self.write_label('IF_TRUE' + str(self.if_counter))
@@ -705,7 +710,8 @@ class Parser:
             else:
                 self.error(token, "'}' expected")
         else:
-            self.write_label('IF_FALSE' + str(self.if_counter))
+            self.write_label('IF_FALSE' + str(self.nested_if[len(self.nested_if)-1]))
+            self.nested_if.pop()
 
     def whileStatement(self):
 
@@ -715,6 +721,7 @@ class Parser:
             self.ok(token)
             self.while_counter += 1
             self.write_label('WHILE_EXP' + str(self.while_counter))
+            self.nested_while.append(self.while_counter)
         else:
             self.error(token, "'while' expected")
 
@@ -775,8 +782,10 @@ class Parser:
         token = self.Tokens.get_next_token()
 
         if token[0] == '}':
-            self.write_goto('WHILE_EXP' + str(self.while_counter))
-            self.write_label('WHILE_END' + str(self.while_counter))
+            self.write_goto('WHILE_EXP' + str(self.nested_while[len(self.nested_while) -1]))
+            self.write_label('WHILE_END' + str(self.nested_while[len(self.nested_while)-1]))
+            self.nested_while.pop()
+
             self.ok(token)
         else:
             self.error(token, "'}' expected")
@@ -1193,13 +1202,6 @@ class Parser:
                     if not self.table.exists(token[0]):
                         self.warning(token, "variable has not been initialised")
 
-            #
-            # # Checks to see if the identifier has been defined previously
-            # if self.table.find_symbol(token, 'method', self.currentMethod) and \
-            #         self.table.find_symbol(token, 'class', self.currentClass) \
-            #         and token[3] != 'Object':
-            #     self.error(token, "variable used has not been declared")
-
             if token[0] == 'this':
                 self.write_push('pointer', '0')
             if token[2] == 'integerConstant':
@@ -1415,8 +1417,15 @@ class Parser:
 
     # Handles string literals
     def write_strings(self, word):
+        length = len(word)
 
-        self.write_push('constant', str(len(word)))
+        for i in range(len(word)):
+            if ascii(word(i)) == 92 and ascii(word(i+1)) != 92:
+                length -=1
+                word = word[:i-1] + word[i+1:]
+
+
+        self.write_push('constant', str(length))
         self.write_call('String.new', '1')
 
         for i in word:
