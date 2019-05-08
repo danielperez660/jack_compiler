@@ -15,6 +15,8 @@ class Parser:
         self.nested_while = []
         self.nested_if = []
 
+        self.warnings = []
+
         self.array_check = False
         self.std_check = False
 
@@ -52,6 +54,7 @@ class Parser:
             self.if_counter = -1
             self.nested_while = []
             self.nested_if = []
+            self.warnings = []
 
             self.array_check = False
             self.std_check = True
@@ -66,6 +69,9 @@ class Parser:
         self.table.print_()
         self.file.close()
 
+        for i in self.warnings:
+            print(i)
+
     @staticmethod
     def ok(token):
         print(token[0] + ": OK")
@@ -75,9 +81,9 @@ class Parser:
         print("error in line", token[1], "at or near " + token[0] + ", " + message)
         exit(0)
 
-    @staticmethod
-    def warning(token, message):
-        print("warning in line", token[1], "at or near " + token[0]+ ", " + message)
+    def warning(self, token, message):
+        warn = "\nwarning in line " + str(token[1]) + " at or near " + token[0]+ ", " + message
+        self.warnings.append(warn)
 
     def classDeclar(self):
         token = self.Tokens.get_next_token()
@@ -162,7 +168,10 @@ class Parser:
                     token[3] = class_type
                 self.table.add_symbol_to(token, self.currentClass, types, self.currentClass)
             else:
-                self.error(token, "redeclaration of identifier")
+                if class_type != "":
+                    token[3] = class_type
+                self.table.add_symbol_to(token, self.currentClass, types, self.currentClass)
+                self.warning(token, "redeclaration of identifier")
         else:
             self.error(token, "identifier expected")
 
@@ -186,7 +195,10 @@ class Parser:
                             token[3] = class_type
                         self.table.add_symbol_to(token, self.currentClass, types, self.currentClass)
                     else:
-                        self.error(token, "redeclaration of identifier")
+                        if class_type != "":
+                            token[3] = class_type
+                        self.table.add_symbol_to(token, self.currentClass, types, self.currentClass)
+                        self.warning(token, "redeclaration of identifier")
 
                     self.ok(token)
                 else:
@@ -316,7 +328,15 @@ class Parser:
                 if not self.std_check:
                     self.var_counter.append([self.currentMethod, self.currentClass, 'arg', self.div[0]])
             else:
-                self.error(token, "redeclaration of identifier")
+                if class_type == '':
+                    self.table.add_symbol_to(token, self.currentMethod, 'argument', self.currentClass)
+                else:
+                    token[3] = class_type
+                    self.table.add_symbol_to(token, self.currentMethod, 'argument', self.currentClass)
+
+                if not self.std_check:
+                    self.var_counter.append([self.currentMethod, self.currentClass, 'arg', self.div[0]])
+                self.warning(token, "redeclaration of identifier")
         else:
             self.error(token, "identifier expected")
 
@@ -356,7 +376,15 @@ class Parser:
                         if not self.std_check:
                             self.var_counter.append([self.currentMethod, self.currentClass, 'arg', self.div[0]])
                     else:
-                        self.error(token, "redeclaration of identifier")
+                        if class_type == '':
+                            self.table.add_symbol_to(token, self.currentMethod, 'argument', self.currentClass)
+                        else:
+                            token[3] = class_type
+                            self.table.add_symbol_to(token, self.currentMethod, 'argument', self.currentClass)
+
+                        if not self.std_check:
+                            self.var_counter.append([self.currentMethod, self.currentClass, 'arg', self.div[0]])
+                        self.warning(token, "redeclaration of identifier")
                 else:
                     self.error(token, "identifier expected")
 
@@ -451,8 +479,15 @@ class Parser:
                 if not self.std_check:
                     self.var_counter.append([self.currentMethod, self.currentClass, 'var', self.div[0]])
             else:
+                if class_type == '':
+                    self.table.add_symbol_to(token, self.currentMethod, 'var', self.currentClass)
+                else:
+                    token[3] = class_type
+                    self.table.add_symbol_to(token, self.currentMethod, 'var', self.currentClass)
 
-                self.error(token, "redeclaration of identifier")
+                if not self.std_check:
+                    self.var_counter.append([self.currentMethod, self.currentClass, 'var', self.div[0]])
+                self.warning(token, "redeclaration of identifier")
 
             self.ok(token)
         else:
@@ -485,7 +520,15 @@ class Parser:
                         if not self.std_check:
                             self.var_counter.append([self.currentMethod, self.currentClass, 'var', self.div[0]])
                     else:
-                        self.error(token, "redeclaration of identifier")
+                        if class_type == '':
+                            self.table.add_symbol_to(token, self.currentMethod, 'var', self.currentClass)
+                        else:
+                            token[3] = class_type
+                            self.table.add_symbol_to(token, self.currentMethod, 'var', self.currentClass)
+
+                        if not self.std_check:
+                            self.var_counter.append([self.currentMethod, self.currentClass, 'var', self.div[0]])
+                        self.warning(token, "redeclaration of identifier")
 
                 else:
                     self.error(token, "identifier expected")
