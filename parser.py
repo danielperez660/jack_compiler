@@ -1418,12 +1418,15 @@ class Parser:
     # Handles string literals
     def write_strings(self, word):
         length = len(word)
+        new_word = word
 
-        for i in range(len(word)):
-            if ascii(word(i)) == 92 and ascii(word(i+1)) != 92:
+        print(len(word) -1)
+        for i in range(len(word) -1):
+            if word[i] == '\\' and word[i+1] != '\\' :
                 length -=1
-                word = word[:i-1] + word[i+1:]
+                new_word = word[:i] + word[i+1:]
 
+        word = new_word
 
         self.write_push('constant', str(length))
         self.write_call('String.new', '1')
