@@ -1,3 +1,5 @@
+Ignore the mess of files flying around
+
 ## Running 
 jack_compiler/compiler/JackCompiler.py <file.jack>
 
