@@ -6,10 +6,15 @@ will produce a single file of file.vm which will be machine code for nand2Tetris
 ## Compiler Files 
 
 parser.py
+
 lexer.py
+
 ClassSymbolTable.py
+
 GlobalSymbolTable.py
+
 MethodSymbolTable.py
+
 
 ## Other Files
 All other files are the standard libraries 
